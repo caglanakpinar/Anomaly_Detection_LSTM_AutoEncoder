@@ -37,7 +37,7 @@ def get_min_max_norm(df, cal_col, group_col):
 def get_descriptive_stats(df, cal_col, group_col, countable_col):
     params = None
     if len(group_col) != 0:
-        df[cal_col + '_mean'], df[cal_col + '_std'] = df[cal_col], df[countable_col]
+        df[cal_col + '_mean'], df[cal_col + '_std'] = df[cal_col], df[cal_col]
         df[cal_col + '_count'] = df[cal_col]
         params = df.pivot_table(index=group_col, aggfunc={cal_col + '_mean': 'mean', cal_col + '_std': 'std',
                                                           cal_col + '_count': 'count'}).reset_index()
@@ -56,7 +56,6 @@ def recalculate_prob_around_avg(p_value, avg_p_value):
 
 
 def get_p_value(df, cal_col):
-    test = stats
     df[cal_col + '_t_value'] = df.apply(lambda row: abs((row[cal_col] - row[cal_col+'_mean']) / (row[cal_col + '_std']*np.sqrt(2/row[cal_col+'_count']))), axis=1)
     df[cal_col+'_p_value'] = df.apply(lambda row: stats.t.cdf(row[cal_col + '_t_value'], df=row[cal_col+'_count']-1), axis=1)
     df[cal_col+'_p_value'] = df[cal_col+'_p_value'].apply(lambda x: recalculate_prob_around_avg(x, 0.5))
@@ -95,8 +94,7 @@ def remove_noisy_data(data, least_transactions, least_days):
     accepted_customers = data.pivot_table(index='customer_id',
                                           aggfunc={'Created_Time': 'count'}
                                           ).reset_index().query("Created_Time >= @least_days")['customer_id']
-    data.query("customer_id in @accepted_customers").reset_index(drop=True)
-    return data
+    return data#.query("customer_id in @accepted_customers").reset_index(drop=True)
 
 
 def distance_values_for_each_k_with_elbow_method(X):

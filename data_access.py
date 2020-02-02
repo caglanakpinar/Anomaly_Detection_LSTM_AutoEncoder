@@ -5,13 +5,14 @@ import json
 import os
 from os import listdir
 
-from configs import runs_at_sample_data, sample_size, start_date, end_date
+from configs import runs_at_sample_data, sample_size, start_date, end_date, amount_range, merchant_ids
 from random_data_generator import generate_random_data
 
 
 def get_data(path, is_for_model):
     if path not in listdir(os.path.abspath("")):
-        generate_random_data(start_date, end_date)
+        print("Random Data is generating!!!")
+        generate_random_data(start_date, end_date, amount_range, merchant_ids)
     df = pd.read_csv(path)
     if 'day' not in list(df.columns):
         df['Created_Time'] = df['RequestInsertTime'].apply(lambda x: datetime.datetime.strptime(str(x)[0:13], '%Y-%m-%d %H'))
@@ -20,6 +21,7 @@ def get_data(path, is_for_model):
     if runs_at_sample_data:
         print("SAMPLE DATA IS RUNNING !!!!!!!")
         random_index = random.sample(list(range(len(df))), sample_size)
+        print(len(random_index), len(df))
         data = df.ix[random_index].reset_index()
         print("sample data :", sample_size)
     else:
