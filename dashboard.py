@@ -105,7 +105,7 @@ def create_dahboard(df_train, df, features):
     asd = feature
     app = dashboard_init()
     app.layout = html.Div([
-        html.Div([html.H1("Anomally Detection Features")],
+        html.Div([html.H1("Anomaly Detection Multivariate Isolation Foreset - AutoEncoder")],
                  style={'textAlign': "left", "padding-bottom": "10", "padding-top": "10"}),
         html.Div(
             [html.Div(dcc.Dropdown(id="select-xaxis",

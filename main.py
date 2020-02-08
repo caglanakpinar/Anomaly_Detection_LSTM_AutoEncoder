@@ -1,7 +1,8 @@
 import sys
 from feature_engineering import CreateFeatures
 from configs import feature, is_local_run, sample_args, hyper_parameter_path
-from model_train import ModelTrain
+from model_train_iso_f import ModelTrainIsolationForest
+from model_train_ae import ModelTrainAutoEncoder
 from dashboard import create_dahboard
 import logger
 from data_access import model_from_to_json
@@ -17,17 +18,24 @@ if __name__ == "__main__":
             create_feature = CreateFeatures(model_deciding=sys.argv[2])
             create_feature.compute_features()
         if (sys.argv[1]) == 'train_process':
-            model_train = ModelTrain(model_deciding=sys.argv[2],
-                                     hyper_parameters=model_from_to_json(hyper_parameter_path, [], False),
-                                     last_day_predictor=int(sys.argv[3]))
-            model_train.model_running()
-            model_train.test_data_prediction()
+            hyper_parameters = model_from_to_json(hyper_parameter_path, [], False)
+            #model_iso_f = ModelTrainIsolationForest(hyper_parameters=hyper_parameters,
+            #                                        last_day_predictor=int(sys.argv[2]))
+            model_ae = ModelTrainAutoEncoder(hyper_parameters=hyper_parameters,
+                                             last_day_predictor=int(sys.argv[2]))
+            #model_iso_f.learning_process_iso_f()
+            model_ae.model_train()
+            model_ae.calculating_loss_function(is_for_prediction=True)
         if sys.argv[1] == 'prediction':
-            model_train = ModelTrain().test_data_prediction()
+            model_iso_f = ModelTrainIsolationForest().train_test_split()
+            prediction = model_iso_f.prediction_iso_f(is_for_prediction=True).test
+            prediction = ModelTrainAutoEncoder(test_data=prediction).calculating_loss_function().test
+
         if (sys.argv[1]) == 'dashboard':
-            model_train = ModelTrain()
-            model_train.test_data_prediction()
-            create_dahboard(model_train.data, model_train.test, feature)
+            model_iso_f = ModelTrainIsolationForest().train_test_split()
+            prediction = model_iso_f.prediction_iso_f(is_for_prediction=True).test
+            prediction = ModelTrainAutoEncoder(test_data=prediction).calculating_loss_function().test
+            create_dahboard(model_iso_f.data, prediction, feature)
     logger.get_time()
 
 

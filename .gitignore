@@ -5,3 +5,6 @@
 *.log
 *.ipynb
 .DS_Store
+auto_encoder.json
+auto_encoder_linear.json
+*.csv

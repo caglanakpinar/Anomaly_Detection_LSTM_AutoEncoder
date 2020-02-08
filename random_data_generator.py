@@ -2,7 +2,7 @@ import random
 import datetime
 import pandas as pd
 
-from configs import card_ids, customer_ids
+from configs import customer_ids
 from configs import sec_diff_morning, sec_diff_evening, sec_diff_night
 from configs import data_path
 
@@ -27,7 +27,6 @@ def generate_random_data(start_date, end_date, amount_range, merchant_ids):
     while start_date < end_date:
         _merchant = random.sample(merchant_ids, 1)[0]
         _merchant_id = _merchant[0]
-        _card = random.sample(card_ids, 1)[0]
         _customer = random.sample(customer_ids, 1)[0]
         _amount = random.sample(amount_range[_merchant[1]]['value'], 1)[0]
         if start_date.hour in list(range(8,16)):
@@ -43,7 +42,6 @@ def generate_random_data(start_date, end_date, amount_range, merchant_ids):
                      'RequestInsertTime': start_date + datetime.timedelta(seconds=_secs),
                      'MerchantId': _merchant[0],
                      'customer_id': _customer,
-                     'card_id': _card,
                      'Amount': _amount
          })
         count += 1

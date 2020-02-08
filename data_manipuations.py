@@ -397,6 +397,56 @@ def get_customer_label_encoder(data, feature):
     data = pd.merge(data, customers, on='customer_id', how='left').rename(columns={'index': 'customers'})
 
 
+def customer_merchant_peak_drop(data, feature):
+    # max
+    the_most_peak = data.pivot_table(index='customer_merchant_id',
+                                     aggfunc={'Amount': 'max'}).reset_index().rename(columns={'Amount': 'amount_max'})
+    transaction_ids = pd.merge(data,
+                               the_most_peak,
+                               on='customer_merchant_id',
+                               how='left').query("amount_max == amount_max")[
+        ['PaymentTransactionId', 'customer_merchant_id']]
+    data['Created_Time_prev'] = data.sort_values(['Amount', 'customer_merchant_id'],
+                                                 ascending=False).groupby('customer_merchant_id')['Created_Time'].shift(1)
+    the_most_peak_2 = data[data['Created_Time_prev'] == data['Created_Time_prev']].pivot_table(
+        index='customer_merchant_id',
+        aggfunc={'Amount': 'max'}).reset_index().rename(columns={'Amount': 'amount_max_2nd'})
+    the_most_peak = pd.merge(the_most_peak, the_most_peak_2, on='customer_merchant_id', how='inner')
+    the_most_peak = pd.merge(the_most_peak, transaction_ids, on='customer_merchant_id', how='inner')
+    the_most_peak['the_most_max_diff'] = the_most_peak['amount_max'] - the_most_peak['amount_max_2nd']
+    the_most_peak = the_most_peak.query("the_most_max_diff != 0")
+    # min
+    the_least_peak = data.pivot_table(index='customer_merchant_id',
+                                      aggfunc={'Amount': 'min'}
+                                      ).reset_index().rename(columns={'Amount': 'amount_min'})
+    transaction_ids = pd.merge(data,
+                               the_least_peak,
+                               on='customer_merchant_id',
+                               how='left').query("amount_min == amount_min")[
+        ['PaymentTransactionId', 'customer_merchant_id']]
+    data['Created_Time_prev'] = data.sort_values(
+        ['Amount', 'customer_merchant_id'], ascending=True
+    ).groupby('customer_merchant_id')['Created_Time'].shift(1)
+    the_least_peak_2 = data[data['Created_Time_prev'] == data['Created_Time_prev']].pivot_table(
+        index='customer_merchant_id',
+        aggfunc={'Amount': 'min'}).reset_index().rename(columns={'Amount': 'amount_min_2nd'})
+    # score calculation for both min and max values
+    the_least_peak = pd.merge(the_least_peak, the_least_peak_2, on='customer_merchant_id', how='inner')
+    the_least_peak = pd.merge(the_least_peak, transaction_ids, on='customer_merchant_id', how='inner')
+    the_least_peak['the_least_min_diff'] = the_least_peak['amount_min_2nd'] - the_least_peak['amount_min']
+    the_least_peak = the_least_peak.query("the_least_min_diff != 0")
+    metrics = [(the_most_peak, 'the_most_max_diff'), (the_least_peak, 'the_least_min_diff')]
+    for metric in metrics:
+        min_value = min(list(metric[0][metric[0][metric[1]] == metric[0][metric[1]]][metric[1]]))
+        max_value = max(list(metric[0][metric[0][metric[1]] == metric[0][metric[1]]][metric[1]]))
+        metric[0][metric[1] + '_min_max_p_value'] = metric[0].apply(
+            lambda row: min_max_scaling(row[metric[1]], min_value, max_value - min_value, None), axis=1)
+        data = pd.merge(data, metric[0], on='PaymentTransactionId', how='left')
+        data[metric[1] + '_min_max_p_value'] = data[metric[1] + '_min_max_p_value'].fillna(0)
+    col_1, col_2 = metrics[0][1] + '_min_max_p_value', metrics[1][1] + '_min_max_p_value'
+    cond = lambda x: x[col_1] if x[col_1] == x[col_1] else x[col_2] if x[col_2] == x[col_2] else 0
+    data[feature] = data.apply(cond, axis=1)
+    return data
 
 
 

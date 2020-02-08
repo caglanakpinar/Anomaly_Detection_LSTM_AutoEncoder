@@ -2,20 +2,18 @@ import datetime
 
 from data_manipuations import clustered_merchant_ratios_feature, customer_transaction_day_diff_feature
 from data_manipuations import customer_merchant_amount_ratio, last_month_of_total_transactions, gmm_cluster_p_value
-from data_manipuations import remove_noisy_data, gmm_customer_scoring, get_last_day_comparisions
+from data_manipuations import remove_noisy_data, gmm_customer_scoring, get_last_day_comparisions, customer_merchant_peak_drop
 
 
 is_local_run = True
-is_min_max_norm = False
-sample_args = ['main.py', 'feature_engineering', 'all']
+is_min_max_norm = True
+sample_args = ['main.py', 'train_process', '1']
 data_path = "transaction_data_all_sample.csv"
 features_data_path = "features_sample.csv"
 test_data_path = 'test_data.csv'
 train_data_path = 'train_data.csv'
-model_keras_path = 'model_keras.json'
+auto_encoder_model_paths = {'ae': 'auto_encoder.json', 'ae_l': 'auto_encoder_linear.json'}
 model_iso_f_path = 'iso_forest.sav'
-model_abnormal_label_path = 'model_keras_abnormal_label.json'
-model_autoencoder_path = 'iso_forest.sav'
 hyper_parameter_path = 'hyper_parameters.json'
 runs_at_sample_data = False
 sample_size = 80000
@@ -49,7 +47,7 @@ feature = {
                    'calling': clustered_merchant_ratios_feature,
                    'name': 'C. - M. Transaction Ratio Scores'
     },
-    'c_freq_diff_p_value': {'args': {
+    'c_freq_diff_min_max_p_value': {'args': {
                                         'data': None,
                                         'noisy_data_remover': remove_noisy_data,
                                         'num_of_transaction_removing': at_least_t_count_per_user,
@@ -60,7 +58,7 @@ feature = {
                                     'calling': customer_transaction_day_diff_feature,
                                     'name': 'C. Difference Of Each Transaction Score'
     },
-    'c_m_med_amount_change_p_value': {'args': {
+    'c_m_med_amount_change_min_max_p_value': {'args': {
                                                        'data': None,
                                                        'noisy_data_remover': remove_noisy_data,
                                                        'num_of_transaction_removing': at_least_t_count_per_user,
@@ -70,6 +68,16 @@ feature = {
                                               'name': 'C. M. Amount Change On Each Transaction Score',
                                               'calling': customer_merchant_amount_ratio
                                               },
+    'c_m_peak_drop_min_max_p_value': {'args': {
+                                                'data': None,
+                                                'noisy_data_remover': remove_noisy_data,
+                                                'num_of_transaction_removing': at_least_t_count_per_user,
+                                                'num_of_days_removing': at_least_day_count_for_user,
+                                                'feature': 'c_m_med_amount_change', 'related_columns': []
+                                            },
+                                                'name': 'C. M. Amount Change On Each Transaction Score',
+                                             'calling': customer_merchant_peak_drop
+    },
     #'last_month_totals_min_max_p_value': {'args': {
     #                                        'data': None,
     #                                        'noisy_data_remover': remove_noisy_data,
@@ -122,20 +130,20 @@ for f in feature:
     features_cols_2[f] = features_cols_2[feature[f]['args']['feature']]
 print(features_cols_2)
 alpha = 0.05
-train_test_split_ratio  = 0.3
+train_test_split_ratio = 0.3
 
 start_date = datetime.datetime.strptime('2018-01-01', '%Y-%m-%d')
 end_date = datetime.datetime.now()
 
-merchant_ids = ['merchant_' + str(m) for m in range(3000)]
+merchant_ids = ['merchant_' + str(m) for m in range(40)]
 sec_diff_evening = list(range(1, 20))
-sec_diff_morning = list(range(1, 200))
-sec_diff_night = list(range(120, 800))
-card_ids = ['card_' + str(m) for m in range(3000000)]
-customer_ids = ['customer_' + str(m) for m in range(150000)]
+sec_diff_morning = list(range(1, 100))
+sec_diff_night = list(range(80, 300))
+customer_ids = ['customer_' + str(m) for m in range(1500)]
 
 amount_range = {'segment_1': {'value': list(range(1, 100)), 'ratio': 0.3},
                 'segment_2': {'value': list(range(80, 25000)), 'ratio': 0.5},
                 'segment_3': {'value': list(range(25000, 100000)), 'ratio': 0.15},
                 'segment_4': {'value': list(range(100000, 1000000)), 'ratio': 0.15}
                 }
+
