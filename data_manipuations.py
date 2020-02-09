@@ -119,12 +119,12 @@ def compute_optimum_k(df, alpha):
     # assign as a column distance value of previous cluster count.
     df['distance_prev'] = df['distance'].shift(1)
     df = df.dropna()  # remove k == 1
-    # calcualte distance difference each k cluster
+    # calculate distance difference each k cluster
     df['clusters_distance_diff'] = df['distance_prev'] - df['distance']
-    # calcualte k standart error of difference values. If k value increases error value changes
-    standart_error = (2.58 * np.std(df['clusters_distance_diff'])) / sqrt(len(df))  # alpha = 0.05, (t_table = 1.96)
-    df['is_lower_than_std_error'] = df['clusters_distance_diff'].apply(lambda x: 1 if x < standart_error else 0)
-    # optmum k values min k whch has differenc less than standart error
+    # calculate k standard error of difference values. If k value increases error value changes
+    standard_error = (2.58 * np.std(df['clusters_distance_diff'])) / sqrt(len(df))  # alpha = 0.05, (t_table = 1.96)
+    df['is_lower_than_std_error'] = df['clusters_distance_diff'].apply(lambda x: 1 if x < standard_error else 0)
+    # optimum k values min k which has difference less than standard error
     return df[df['is_lower_than_std_error'] == 1].sort_values(by='k', ascending=True).to_dict('resuls')[0]['k']
 
 
@@ -224,6 +224,9 @@ def clustered_merchant_ratios_feature(data, feature):
     data = pd.merge(data, pv_1, on=['merchant_id', 'customer_id', 'merchant_label'], how='left')
     data[feature] = 1 - data[feature]
     data[feature] = data[feature].fillna(0)
+    data[feature] = data.apply(lambda row: 0 if row['c_m_t_count'] in [1, 2, 3] else
+                                           0 if row[feature] < 0.8 else 1
+                               , axis=1)
     return data
 
 
@@ -241,9 +244,10 @@ def customer_transaction_day_diff_feature(data, feature):
         lambda row: (row['Created_Time'] - row['prev_transactions']).total_seconds() / 60 / 60, axis=1)
     data = data[data['day_diff'] == data['day_diff']]
     data = data.reset_index(drop=True)
-    data['c_freq_diff'] = data.apply(lambda row: abs(row['customer_freq'] - row['day_diff']), axis=1)
+    data['c_freq_diff'] = data.apply(lambda row: abs(row['customer_freq'] - row['day_diff'])
+                                     if row['customer_freq'] > row['day_diff'] else row['customer_freq'],
+                                     axis=1)
     data = data.reset_index(drop=True)
-    # TODO: Converting to T Dist. P-Value
     if configs.is_min_max_norm:
         data = pd.concat([data,
                           get_min_max_norm(data.copy(), 'c_freq_diff', 'customer_id').reset_index(drop=True)], axis=1)
@@ -274,6 +278,7 @@ def customer_merchant_amount_ratio(data, feature):
                                               'c_m_med_amount_change', 'customer_merchant_id', 'PaymentTransactionId'),
                         on='customer_merchant_id', how='left')
         data = get_p_value(data, 'c_m_med_amount_change')
+    data[feature] = data.apply(lambda row: 0 if row['t_transactions'] < 5 else row[feature], axis=1)
     return data
 
 
