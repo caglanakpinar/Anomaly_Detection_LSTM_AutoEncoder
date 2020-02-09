@@ -1,0 +1,36 @@
+{"c_m_ratios": {"args": {
+                        "data": "-",
+                        "noisy_data_remover": "remove_noisy_data",
+                        "num_of_transaction_removing": 5,
+                        "num_of_days_removing": 5,
+                        "feature": "c_m_ratios",
+                        "using_normalization": "False",
+                        "related_columns": "-"
+                    },
+                   "calling": "clustered_merchant_ratios_feature",
+                   "name": "C. - M. Transaction Ratio Scores"
+    },
+    "c_freq_diff": {"args": {
+                                        "data": "-",
+                                        "noisy_data_remover": "remove_noisy_data",
+                                        "num_of_transaction_removing": 5,
+                                        "num_of_days_removing": 5,
+                                        "feature": "c_freq_diff",
+                                        "using_normalization": "True",
+                                        "related_columns": "-"
+                                        },
+                                    "calling": "customer_transaction_day_diff_feature",
+                                    "name": "C. Difference Of Each Transaction Score"
+    },
+    "c_m_peak_drop_min_max_p_value": {"args": {
+                                                       "data": "-",
+                                                       "noisy_data_remover": "remove_noisy_data",
+                                                       "num_of_transaction_removing": 5,
+                                                       "num_of_days_removing": 5,
+                                                       "feature": "c_m_med_amount_change", "related_columns": "-",
+                                                       "using_normalization": "False"
+    },
+                                              "name": "C. M. AbNormal Peak And Drop Score",
+                                              "calling": "customer_merchant_peak_drop"
+                                              }
+}
