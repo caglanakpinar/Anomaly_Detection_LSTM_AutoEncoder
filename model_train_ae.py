@@ -10,7 +10,7 @@ from logger import get_time
 
 
 class ModelTrainAutoEncoder:
-    def __init__(self, hyper_parameters=None, last_day_predictor=None, test_data=None):
+    def __init__(self, hyper_parameters=None, last_day_predictor=None, test_data=None, is_multivariate=None):
         get_time()
         self.data = get_data(features_data_path, True)
         self.features = list(feature.keys())
@@ -19,7 +19,8 @@ class ModelTrainAutoEncoder:
         self.train, self.test = None, None if test_data is None else test_data
         self.X, self.y_pred, self.y = None, None, None
         self.input, self.fr_output = None, None
-        self.model_ae, self.model_ae_l = None, None
+        self.model_ae, self.model_ae_l, self.model_ae_u = None, None, None
+        self.is_multivariate = is_multivariate
 
     def model_from_to_json(self, path, model=None, is_writing=False):
         if is_writing:
@@ -44,7 +45,7 @@ class ModelTrainAutoEncoder:
     def get_x_values(self, is_for_prediction):
         self.X = self.test[self.features].values if is_for_prediction else self.train[self.features].values
 
-    def auto_encoder(self):
+    def auto_encoder(self, univariate):
         self.input = Input(shape=(len(self.features),))
         encoder1 = Dense(200, activation='tanh')(self.input)
         encoder2 = Dense(100, activation='tanh')(encoder1)
@@ -56,8 +57,11 @@ class ModelTrainAutoEncoder:
         decoder3 = Dense(100, activation='tanh')(decoder2)
         decoder4 = Dense(200, activation='tanh')(decoder3)
         decoder5 = Dense(len(self.features), activation='sigmoid')(decoder4)
-        self.model_ae = Model(inputs=self.input, outputs=decoder5)
-        self.model_ae.compile(loss='mse', optimizer=RMSprop(learning_rate=0.01), metrics=['mse'])
+        if not univariate:
+            self.model_ae = Model(inputs=self.input, outputs=decoder5)
+            self.model_ae.compile(loss='mse', optimizer=RMSprop(learning_rate=0.01), metrics=['mse'])
+        else:
+
 
     def auto_encoder_linear(self):
         self.input = Input(shape=(len(self.features),))
@@ -74,7 +78,7 @@ class ModelTrainAutoEncoder:
         get_time()
         self.train_test_split()
         self.get_x_values(is_for_prediction=False)
-        self.auto_encoder()
+        self.auto_encoder(univariate=False)
         self.auto_encoder_linear()
         self.model_ae.fit(self.X, self.X,
                           epochs=int(self.tuned_parameters['feature_reduction']['epochs']),
@@ -87,6 +91,19 @@ class ModelTrainAutoEncoder:
 
         for m in [(self.model_ae, 'ae'), (self.model_ae_l, 'ae_l')]:
             self.model_from_to_json(auto_encoder_model_paths[m[1]], self.feature_reduction(m[0]), is_writing=True)
+
+    def model_train_univariate(self):
+        print("Auto Encoder univariate is initialized!!")
+        get_time()
+        self.train_test_split()
+        self.get_x_values(is_for_prediction=False)
+        features = self.fatures
+        for f in features:
+            self.fatures = f # updating feature list in order to run AE univariate form
+            self.auto_encoder(univariate=True)
+
+
+
 
     def calculating_loss_function(self, is_for_prediction):
         if is_for_prediction:

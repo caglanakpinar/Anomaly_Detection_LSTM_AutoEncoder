@@ -19,11 +19,11 @@ if __name__ == "__main__":
             create_feature.compute_features()
         if (sys.argv[1]) == 'train_process':
             hyper_parameters = model_from_to_json(hyper_parameter_path, [], False)
-            #model_iso_f = ModelTrainIsolationForest(hyper_parameters=hyper_parameters,
-            #                                        last_day_predictor=int(sys.argv[2]))
+            model_iso_f = ModelTrainIsolationForest(hyper_parameters=hyper_parameters,
+                                                    last_day_predictor=int(sys.argv[2]))
             model_ae = ModelTrainAutoEncoder(hyper_parameters=hyper_parameters,
                                              last_day_predictor=int(sys.argv[2]))
-            #model_iso_f.learning_process_iso_f()
+            model_iso_f.learning_process_iso_f()
             model_ae.model_train()
             model_ae.calculating_loss_function(is_for_prediction=True)
         if sys.argv[1] == 'prediction':
