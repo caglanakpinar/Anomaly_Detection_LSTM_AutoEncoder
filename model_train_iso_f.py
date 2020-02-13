@@ -37,6 +37,7 @@ class ModelTrainIsolationForest:
         if is_writing:
             pickle.dump(self.model_iso, open(model_iso_f_path, 'wb'))
         else:
+            # TODO: needs to be updated
             self.model_iso = joblib.load(model_iso_f_path)
 
     def learning_process_iso_f(self):
@@ -53,6 +54,8 @@ class ModelTrainIsolationForest:
 
     def prediction_iso_f(self, is_for_prediction):
         self.get_x_values(is_for_prediction=is_for_prediction)
+        if is_for_prediction:
+            self.model_iso = self.model_from_to_pickle(False)
         self.test['label_iso'] = self.model_iso.predict(self.test[self.features].values)
         self.test['label_iso'] = self.test['label_iso'].apply(lambda x: 1 if x == -1 else 0)
         self.test['decision_scores'] = self.model_iso.decision_function(self.test[self.features].values)

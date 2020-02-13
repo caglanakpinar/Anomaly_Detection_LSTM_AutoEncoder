@@ -4,9 +4,10 @@ import random
 import json
 import os
 from os import listdir
+from inspect import getmembers, isfunction
 
 from configs import runs_at_sample_data, sample_size, start_date, end_date, amount_range, merchant_ids
-from configs import diff_range, customer_ids
+from configs import diff_range, customer_ids, is_min_max_norm
 from random_data_generator import generate_random_data, generate_random_data_v2
 
 

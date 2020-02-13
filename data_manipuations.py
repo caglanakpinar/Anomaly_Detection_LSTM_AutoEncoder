@@ -6,12 +6,38 @@ from sklearn.cluster import KMeans
 from scipy.spatial.distance import cdist
 from math import sqrt
 from scipy import stats
+from itertools import product
 
 import configs
 
 
 def min_max_scaling(val, min_val, range_val, avg_range):
     return (val - min_val) / range_val if range_val != 0 else (val - min_val)  / avg_range
+
+
+def get_day_part():
+    hour_dict = {}
+    for h in range(24):
+        if h in range(8):
+            hour_dict[h] = '[0-8)'
+        if h in range(8, 12):
+            hour_dict[h] = '[8-12)'
+        if h in range(12, 18):
+            hour_dict[h] = '[12-18)'
+        if h in range(18, 24):
+            hour_dict[h] = '[18-24)'
+    return hour_dict
+
+
+def get_day_parts_of_data(c_m_dates, start, end, day_parts, renames):
+    days = []
+    for c_m in c_m_dates:
+        _start, _end, _count = c_m_dates[c_m]['start'], c_m_dates[c_m]['end'], c_m_dates[c_m]['total_t_count']
+        c_m_days = int((end - start).total_seconds() / 60 / 60 / 24)
+        while start < end:
+            days += list(product(c_m, c_m_days, _count, start, day_parts))
+            start + datetime.timedelta(days=1)
+    return pd.DataFrame(days).rename(columns=renames)
 
 
 def get_min_max_norm(df, cal_col, group_col):
@@ -452,6 +478,28 @@ def customer_merchant_peak_drop(data, feature):
     cond = lambda x: x[col_1] if x[col_1] == x[col_1] else x[col_2] if x[col_2] == x[col_2] else 0
     data[feature] = data.apply(cond, axis=1)
     return data
+
+
+def get_customer_merchant_hourly_sequential_data(data, feature):
+    group_cols = ['customer_merchant_id', 'Created_Time', 'day_part']
+    day_parts = get_day_part()
+    data['day_part'] = data['hour'].apply(lambda x: day_parts[x])
+    data_pv = data.pivot_table(index=group_cols,
+                               aggfunc={'Amount': 'median'}).reset_index()
+    data_pv = data_pv.sort_values(by=group_cols, ascending=True)
+    data_pv['start'], data_pv['end'] = data_pv['Created_Time'], data_pv['Created_Time']
+    c_m_dates = data_pv.pivot_table(index='customer_merchant_id',
+                                    aggfunc={'start': 'min', 'end': 'max', 'total_t_count': 'count'}).to_dict('index')
+    dates = get_day_parts_of_data(c_m_dates=c_m_dates,
+                                  start=min(data['Created_Time']),
+                                  end=max(data['Created_Time']),
+                                  day_parts=list(day_parts.keys()),
+                                  renames={0: 'customer_merchant_id', 1: group_cols[0], 2: 'total_days',
+                                           3: group_cols[1], 4: group_cols[2]}
+                                  )
+    dates = pd.merge(dates, data_pv, on=group_cols, how='left')
+    dates['Amount'] = dates['Amount'].fillna(0)
+    return dates
 
 
 

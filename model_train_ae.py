@@ -57,10 +57,8 @@ class ModelTrainAutoEncoder:
         decoder3 = Dense(100, activation='tanh')(decoder2)
         decoder4 = Dense(200, activation='tanh')(decoder3)
         decoder5 = Dense(len(self.features), activation='sigmoid')(decoder4)
-        if not univariate:
-            self.model_ae = Model(inputs=self.input, outputs=decoder5)
-            self.model_ae.compile(loss='mse', optimizer=RMSprop(learning_rate=0.01), metrics=['mse'])
-        else:
+        self.model_ae = Model(inputs=self.input, outputs=decoder5)
+        self.model_ae.compile(loss='mse', optimizer=RMSprop(learning_rate=0.01), metrics=['mse'])
 
 
     def auto_encoder_linear(self):
@@ -101,9 +99,6 @@ class ModelTrainAutoEncoder:
         for f in features:
             self.fatures = f # updating feature list in order to run AE univariate form
             self.auto_encoder(univariate=True)
-
-
-
 
     def calculating_loss_function(self, is_for_prediction):
         if is_for_prediction:

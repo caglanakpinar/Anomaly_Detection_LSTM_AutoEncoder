@@ -7,7 +7,7 @@ from data_manipuations import remove_noisy_data, gmm_customer_scoring, get_last_
 
 is_local_run = True
 is_min_max_norm = True
-sample_args = ['main.py', 'feature_engineering', 'all']
+sample_args = ['main.py', 'dashboard', '0']
 data_path = "transaction_data_all_sample.csv"
 features_data_path = "features_sample.csv"
 test_data_path = 'test_data.csv'
@@ -15,6 +15,7 @@ train_data_path = 'train_data.csv'
 auto_encoder_model_paths = {'ae': 'auto_encoder.json', 'ae_l': 'auto_encoder_linear.json'}
 model_iso_f_path = 'iso_forest.sav'
 hyper_parameter_path = 'hyper_parameters.json'
+feature_lstm_ae = 'features_lstm_ae.json'
 runs_at_sample_data = False
 sample_size = 80000
 removing_columns = ['TransactionType', 'TerminalId', 'Created_Time_str', 'source_API', 'source_Common Payment',
