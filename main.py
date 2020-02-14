@@ -34,9 +34,11 @@ if __name__ == "__main__":
         if (sys.argv[1]) == 'dashboard':
             model_iso_f = ModelTrainIsolationForest()
             model_iso_f.train_test_split()
-            prediction = model_iso_f.prediction_iso_f(is_for_prediction=True).test
+            model_iso_f.prediction_iso_f(is_for_prediction=True)
+            prediction = model_iso_f.test
             model_ae = ModelTrainAutoEncoder(test_data=prediction)
-            prediction = model_ae.calculating_loss_function(is_for_prediction=True).test
+            model_ae.calculating_loss_function(is_for_prediction=True)
+            prediction = model_ae.test
             create_dahboard(model_iso_f.data, prediction, feature)
     logger.get_time()
 

@@ -5,7 +5,7 @@ from data_manipuations import customer_merchant_amount_ratio, last_month_of_tota
 from data_manipuations import remove_noisy_data, gmm_customer_scoring, get_last_day_comparisions, customer_merchant_peak_drop
 
 
-is_local_run = True
+is_local_run = False
 is_min_max_norm = True
 sample_args = ['main.py', 'dashboard', '0']
 data_path = "transaction_data_all_sample.csv"

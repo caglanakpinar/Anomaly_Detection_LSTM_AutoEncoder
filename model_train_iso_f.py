@@ -35,10 +35,9 @@ class ModelTrainIsolationForest:
 
     def model_from_to_pickle(self, is_writing):
         if is_writing:
-            pickle.dump(self.model_iso, open(model_iso_f_path, 'wb'))
+            joblib.dump(self.model_iso, open(model_iso_f_path, 'wb'))
         else:
-            # TODO: needs to be updated
-            self.model_iso = joblib.load(model_iso_f_path)
+            return joblib.load(model_iso_f_path)
 
     def learning_process_iso_f(self):
         print("isolation forest train process is initialized!!")
