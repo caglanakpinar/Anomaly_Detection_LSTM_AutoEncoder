@@ -1,9 +1,8 @@
-import datetime
 import warnings
 warnings.filterwarnings("ignore")
 
-from configs import data_path, removing_columns, features_data_path, alpha, feature
-from data_access import get_data, write_to_csv
+from configs import data_path, removing_columns, features_data_path, alpha, feature_path
+from data_access import get_data, write_to_csv, decide_feature_name
 from data_manipuations import get_p_value, get_descriptive_stats
 from logger import get_time
 
@@ -13,7 +12,7 @@ class CreateFeatures:
         self.data_path = data_path if model_deciding == 'all' else features_data_path
         self.data = get_data(path=self.data_path, is_for_model=False)
         self.columns = list(self.data.columns)
-        self.features = feature
+        self.features = decide_feature_name(feature_path)
         self.removing_columns = removing_columns
         self.model_deciding = model_deciding
 
