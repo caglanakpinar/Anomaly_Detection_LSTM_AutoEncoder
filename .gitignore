@@ -8,3 +8,7 @@
 auto_encoder.json
 auto_encoder_linear.json
 *.csv
+*.local
+*.profile-empty
+*.trace
+*.v2

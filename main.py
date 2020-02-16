@@ -1,6 +1,6 @@
 import sys
 from feature_engineering import CreateFeatures
-from configs import feature, is_local_run, sample_args, hyper_parameter_path
+from configs import is_local_run, sample_args, hyper_parameter_path
 from model_train_iso_f import ModelTrainIsolationForest
 from model_train_ae import ModelTrainAutoEncoder
 from dashboard import create_dahboard
@@ -25,21 +25,23 @@ if __name__ == "__main__":
                                              last_day_predictor=int(sys.argv[2]))
             model_iso_f.learning_process_iso_f()
             model_ae.model_train()
-            model_ae.calculating_loss_function(is_for_prediction=True)
         if sys.argv[1] == 'prediction':
-            model_iso_f = ModelTrainIsolationForest().train_test_split()
-            prediction = model_iso_f.prediction_iso_f(is_for_prediction=True).test
-            prediction = ModelTrainAutoEncoder(test_data=prediction).calculating_loss_function().test
-
-        if (sys.argv[1]) == 'dashboard':
-            model_iso_f = ModelTrainIsolationForest()
+            model_iso_f = ModelTrainIsolationForest(last_day_predictor=int(sys.argv[2]))
             model_iso_f.train_test_split()
             model_iso_f.prediction_iso_f(is_for_prediction=True)
             prediction = model_iso_f.test
             model_ae = ModelTrainAutoEncoder(test_data=prediction)
             model_ae.calculating_loss_function(is_for_prediction=True)
             prediction = model_ae.test
-            create_dahboard(model_iso_f.data, prediction, feature)
+        if (sys.argv[1]) == 'dashboard':
+            model_iso_f = ModelTrainIsolationForest(last_day_predictor=int(sys.argv[2]))
+            model_iso_f.train_test_split()
+            model_iso_f.prediction_iso_f(is_for_prediction=True)
+            prediction = model_iso_f.test
+            model_ae = ModelTrainAutoEncoder(test_data=prediction)
+            model_ae.calculating_loss_function(is_for_prediction=True)
+            prediction = model_ae.test
+            create_dahboard(model_iso_f.data, prediction)
     logger.get_time()
 
 

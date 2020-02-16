@@ -1,24 +1,45 @@
 import joblib
 from sklearn.ensemble import IsolationForest
 
-import pickle
 import datetime
-from configs import date_col, train_end_date, features_data_path, feature
+from configs import date_col, train_end_date, feature_path, features_data_path
 from configs import model_iso_f_path
-from data_access import get_data
+from data_access import get_data, decide_feature_name
 from logger import get_time
 
 
 class ModelTrainIsolationForest:
-    def __init__(self, hyper_parameters=None, model_deciding=None, last_day_predictor=None, test_data=None):
+    """
+    Isolation Forest Algorithm.
+
+    Return the anomaly score of each sample using the IsolationForest algorithm
+
+    The IsolationForest 'isolates' observations by randomly selecting a feature
+    and then randomly selecting a split value between the maximum and minimum
+    values of the selected feature.
+
+    data: it is the transition of raw data with generated features
+    features: key of dictionary from feature.json file
+    train: train data set of Isolation Forest.
+    test: test data set of Isolation Forest. This is splitting according to last_day_predictor
+    model_iso: isolation model aim to train
+    last_day_predictor: shows how data set splitting into train and test.
+                        If it is 0 that means splitting according to train_date_end.
+                        IF is is 1 it is splitting according to is_last_day
+    train_test_split: splits raw data into the train and test
+    get_x_values: gets values of test or train with features
+    model_from_to_pickle: model saving to json file
+    learning_process_iso_f: fit the model
+    prediction_iso_f: predicting model with trained model
+    """
+    def __init__(self, hyper_parameters=None, last_day_predictor=None, test_data=None):
         get_time()
         self.data = get_data(features_data_path, True)
-        self.current_date = max(self.data['Created_Time']) + datetime.timedelta(days=1)
-        self.features = list(feature.keys())
+        self.features = list(decide_feature_name(feature_path).keys())
         self.tuned_parameters = hyper_parameters
         self.train, self.test = None, None if test_data is None else test_data
         self.X, self.Y = None, None
-        self.model_iso, self.model_a_c, self.model_a_l_c = None, None, None
+        self.model_iso = None
         self.last_day_predictor = last_day_predictor
 
     def train_test_split(self):
@@ -53,9 +74,11 @@ class ModelTrainIsolationForest:
 
     def prediction_iso_f(self, is_for_prediction):
         self.get_x_values(is_for_prediction=is_for_prediction)
+        x = self.X[0:10]
         if is_for_prediction:
             self.model_iso = self.model_from_to_pickle(False)
-        self.test['label_iso'] = self.model_iso.predict(self.test[self.features].values)
+        print("")
+        self.test['label_iso'] = self.model_iso.predict(self.X)
         self.test['label_iso'] = self.test['label_iso'].apply(lambda x: 1 if x == -1 else 0)
-        self.test['decision_scores'] = self.model_iso.decision_function(self.test[self.features].values)
+        self.test['decision_scores'] = self.model_iso.decision_function(self.X)
 

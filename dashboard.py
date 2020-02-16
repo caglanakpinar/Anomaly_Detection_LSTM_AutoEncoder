@@ -8,8 +8,9 @@ import plotly.offline as offline
 import datetime
 import webbrowser
 
-from configs import sample_sizes, k_means_cluster_colors, related_cols
-from configs import feature, models_output, related_columns, is_local_run, features_cols_2
+from configs import sample_sizes, k_means_cluster_colors, related_cols, feature_path, host, port
+from configs import models_output, related_columns, is_local_run, features_cols_2
+from data_access import decide_feature_name
 
 
 def get_last_day_comparisions(data):
@@ -71,18 +72,15 @@ def get_samples(df):
 
 
 def dashboard_init():
-    offline.init_notebook_mode()
     external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
     return dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 
-def create_dahboard(df_train, df, features):
-    features = list(feature.keys())
-    df_train['label_iso'] = 0
-    df_train['label_a_c'] = 0
-    df_train['intersection_of_models'] = 0
-    df['intersection_of_models'] = df.apply(lambda row: 1 if row['label_a_c'] == 1 and row['label_iso'] == 1 else 0, axis=1)
-    df_train = pd.concat([df_train[related_cols].reset_index(drop=True),
+def create_dahboard(df_train, df):
+    fea_dict = decide_feature_name(feature_path)
+    feature = list(fea_dict.keys())
+    df_train['label_iso'], df_train['anomaly_ae_values'] = 0, 0
+    df_train = pd.concat([df_train[related_cols + feature + list(models_output.keys())].reset_index(drop=True),
                           df[related_cols].reset_index(drop=True)]).query("Amount == Amount")
     customer_merchant_ratios = df_train.pivot_table(index=['customer_id', 'merchant_id'],
                                                     aggfunc={'c_m_label_t_count': 'max', 'c_m_t_count': 'max',
@@ -94,46 +92,39 @@ def create_dahboard(df_train, df, features):
         _customers = list(samples_dict[s[0]]['data']['customer_id'].unique())
         samples_dict[s[0]]['c_m_ratios'] = customer_merchant_ratios.query("customer_id in @_customers")
         samples_dict[s[0]]['customer_transactions'] = df_train.query("customer_id in @_customers")
-    top_100_transactions_anomaly = df.query("intersection_of_models == 1").sort_values(by='decision_scores',
-                                                                                       ascending=True).head(100)
-    samples_dict['top_100'] = {'data': top_100_transactions_anomaly}
-    _customers = list(samples_dict['top_100']['data']['customer_id'].unique())
-    samples_dict['top_100']['c_m_ratios'] = customer_merchant_ratios.query("customer_id in @_customers")
-    samples_dict['top_100']['customer_transactions'] = df_train.query("customer_id in @_customers")
-    merchants = list(samples_dict['top_100']['data']['merchant_id'].unique())
-    print(features)
-    asd = feature
+    _customers = list(df.sort_values(by='anomaly_ae_values', ascending=False)['customer_id'].unique())[0:100]
+    merchants = list(df.sort_values(by='anomaly_ae_values', ascending=False)['merchant_id'].unique())[0:100]
+
     app = dashboard_init()
     app.layout = html.Div([
         html.Div([html.H1("Anomaly Detection Multivariate Isolation Foreset - AutoEncoder")],
                  style={'textAlign': "left", "padding-bottom": "10", "padding-top": "10"}),
         html.Div(
             [html.Div(dcc.Dropdown(id="select-xaxis",
-                                   options=[{'label': feature[i]['name'], 'value': i} for i in features],
-                                   value=features[0], ), className="four columns",
+                                   options=[{'label': fea_dict[i]['name'], 'value': i} for i in fea_dict],
+                                   value=feature[0], ), className="four columns",
                       style={"display": "block", "margin-left": "!%",
                              "margin-right": "auto", "width": "33%"}),
              html.Div(dcc.Dropdown(id="select-yaxis",
-                                   options=[{'label': feature[i]['name'], 'value': i} for i in features],
-                                   value=features[1], ), className="four columns",
+                                   options=[{'label': fea_dict[i]['name'], 'value': i} for i in fea_dict],
+                                   value=feature[1], ), className="four columns",
                       style={"display": "block", "margin-left": "auto",
                              "margin-right": "auto", "width": "33%"}),
              html.Div(dcc.Dropdown(id="select-zaxis",
-                                   options=[{'label': feature[i]['name'], 'value': i} for i in features],
-                                   value=features[2], ), className="four columns",
+                                   options=[{'label': fea_dict[i]['name'], 'value': i} for i in fea_dict],
+                                   value=feature[2], ), className="four columns",
                       style={"display": "block", "margin-left": "auto",
                              "margin-right": "1%", "width": "33%"})
              ], className="row", style={"padding": 14, "display": "block", "margin-left": "1%",
                                         "margin-right": "auto", "width": "99%"}),
         html.Div(
             [html.Div(dcc.Dropdown(id="model-selection", options=[{'label': models_output[i], 'value': i} for i in
-                                                                  ['label', 'label_iso',
-                                                                   'intersection_of_models']],
+                                                                  models_output.keys()],
                                    value='label_iso', ), className="four columns",
                       style={"display": "block", "margin-left": "1%",
                              "margin-right": "auto", "width": "49%"}),
              html.Div(dcc.Dropdown(id="sample-ratio", options=[{'label': i[0].title(), 'value': i[0]} for i in
-                                                               sample_sizes + [['top_100']]],
+                                                               sample_sizes],
                                    value='%20', ), className="four columns",
                       style={"display": "block", "margin-left": "auto",
                              "margin-right": "auto", "width": "49%"})
@@ -193,16 +184,22 @@ def create_dahboard(df_train, df, features):
 
     )
     def ugdate_figure(selected_x, selected_y, selected_z, model_selection, sample_sizes, customer, merchant):
-        dff = samples_dict[sample_sizes]['data'].query("customer_id == @customer") if customer != 'ALL' else \
-        samples_dict[sample_sizes]['data']
-        dff = dff.query("merchant_id == @merchant") if merchant != 'ALL' else dff
-        print(dff.head())
-        dff = dff.rename(columns={selected_x: features_cols_2[selected_x], selected_y: features_cols_2[selected_y],
-                                  selected_z: features_cols_2[selected_z]})
+        if customer != 'ALL':
+            dff = samples_dict[sample_sizes]['data'].query("customer_id == @customer")
+        else:
+            dff = samples_dict[sample_sizes]['data']
+        if merchant != 'ALL':
+            dff = dff.query("merchant_id == @merchant")
+
+        dff = dff.rename(columns={selected_x: fea_dict[selected_x]['name'],
+                                  selected_y: fea_dict[selected_y]['name'],
+                                  selected_z: fea_dict[selected_z]['name']})
 
         z = dff[model_selection]
         trace = [go.Scatter3d(
-                              x=dff[features_cols_2[selected_x]], y=dff[features_cols_2[selected_y]], z=dff[features_cols_2[selected_z]],
+                              x=dff[fea_dict[selected_x]['name']],
+                              y=dff[fea_dict[selected_y]['name']],
+                              z=dff[fea_dict[selected_z]['name']],
                               customdata=dff['PaymentTransactionId'],
                               mode='markers',
                               marker={'size': 3, 'color': z,
@@ -214,9 +211,9 @@ def create_dahboard(df_train, df, features):
                 "layout": go.Layout(
                     height=700,
                     hovermode='closest',
-                    scene={"aspectmode": "cube", "xaxis": {"title": f"{features_cols_2[selected_x].title()}", },
-                           "yaxis": {"title": f"{features_cols_2[selected_y].title()}", },
-                           "zaxis": {"title": f"{features_cols_2[selected_z].title()}", }})
+                    scene={"aspectmode": "cube", "xaxis": {"title": f"{fea_dict[selected_x]['name'].title()}", },
+                           "yaxis": {"title": f"{fea_dict[selected_y]['name'].title()}", },
+                           "zaxis": {"title": f"{fea_dict[selected_z]['name'].title()}", }})
                 }
 
     # Bar Chart
@@ -266,10 +263,8 @@ def create_dahboard(df_train, df, features):
         print(customer_merchant_id.split("_")[0])
         return {"data": [go.Scatter(x=dff['RequestInsertTime'], y=dff['Amount'], mode='markers')],
                 "layout": go.Layout(height=300,
-                                    title=features_cols_2[
-                                              'c_m_med_amount_change_min_max_p_value'] + " || C:" +
-                                        customer_merchant_id.split("_")[0] + " - M :" +
-                                          customer_merchant_id.split("_")[1]
+                                    title=fea_dict['c_m_peak_drop_min_max_p_value']['args']['name'] + " || C_M:" +
+                                        customer_merchant_id
                                     )
                 }
 
@@ -287,7 +282,7 @@ def create_dahboard(df_train, df, features):
 
         dff = samples_dict[sample_sizes]['data'].query("PaymentTransactionId == @hoverData")
         trace = [go.Table(
-            header=dict(values=related_columns,
+            header=dict(values=related_columns + feature,
                         line_color='darkslategray',
                         fill_color='lightcyan',
                         align='left'),
@@ -304,11 +299,9 @@ def create_dahboard(df_train, df, features):
     @app.callback(
         dash.dependencies.Output("my-graph_3", "figure"),
         [dash.dependencies.Input("3d-scatter-plot", "hoverData"),
-         dash.dependencies.Input("model-selection", "value"),
          dash.dependencies.Input("sample-ratio", "value")]
-
     )
-    def get_c_freq_diff(hover_data_from_3d_scatter, model_selection, sample_sizes):
+    def get_c_freq_diff(hover_data_from_3d_scatter, sample_sizes):
         try:
             hoverData = hover_data_from_3d_scatter['points'][0]['PaymentTransactionId']
         except:
@@ -318,14 +311,12 @@ def create_dahboard(df_train, df, features):
             samples_dict[sample_sizes]['data'][['PaymentTransactionId', 'customer_merchant_id']].query(
                 "PaymentTransactionId == @hoverData")['customer_merchant_id'])[0]
 
-        dff = \
-        samples_dict[sample_sizes]['customer_transactions'].query("customer_merchant_id == @customer_merchant_id")[
+        dff = samples_dict[sample_sizes]['customer_transactions'].query("customer_merchant_id == @customer_merchant_id")[
             ['c_freq_diff', 'RequestInsertTime', 'label_iso']]
-        # dff = pd.DataFrame(zip(customers_of_amounts[customer_merchant_id]['Amount'], customers_of_amounts[customer_merchant_id]['RequestInsertTime']))
-        print(customer_merchant_id.split("_")[0])
+        print(customer_merchant_id)
         return {"data": [go.Scatter(x=dff['RequestInsertTime'], y=dff['c_freq_diff'], mode='markers')],
                 "layout": go.Layout(height=300,
-                                    title=features_cols_2['c_freq_diff'] + " || C:" + customer_merchant_id.split("_")[0])
+                                    title="C. Difference Of Each Transaction Score || C_M:" + customer_merchant_id)
                 }
     if is_local_run:
         webbrowser.open('http://127.0.0.1:8050/')
@@ -333,5 +324,5 @@ def create_dahboard(df_train, df, features):
     else:
         app_is_open = True
         while not app_is_open:
-            app.run_server(debug=False, port=3030, host='10.20.10.196')
+            app.run_server(debug=False, port=port, host=host)
             app_is_open = False

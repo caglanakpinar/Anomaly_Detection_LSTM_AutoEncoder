@@ -6,9 +6,10 @@ import os
 from os import listdir
 from inspect import getmembers, isfunction
 
-from configs import runs_at_sample_data, sample_size, start_date, end_date, amount_range, merchant_ids
+from configs import run_from_sample_data, sample_size, start_date, end_date, amount_range, merchant_ids
 from configs import diff_range, customer_ids, is_min_max_norm
 from random_data_generator import generate_random_data, generate_random_data_v2
+import data_manipuations as dm
 
 
 def get_data(path, is_for_model):
@@ -21,7 +22,7 @@ def get_data(path, is_for_model):
         df['Created_Time'] = df['RequestInsertTime'].apply(lambda x: datetime.datetime.strptime(str(x)[0:13], '%Y-%m-%d %H'))
     else:
         df['Created_Time'] = df['day'].apply(lambda x: datetime.datetime.strptime(str(x)[0:13], '%Y-%m-%d'))
-    if runs_at_sample_data:
+    if run_from_sample_data:
         print("SAMPLE DATA IS RUNNING !!!!!!!")
         random_index = random.sample(list(range(len(df))), sample_size)
         print(len(random_index), len(df))
@@ -64,7 +65,6 @@ def decide_feature_name(feature_path):
     functions_list = [o for o in getmembers(dm) if isfunction(o[1])]
     feature_2 = {}
     for f in feature:
-        print(feature[f]['args'])
         _func = [func[1] for func in functions_list if func[0] == feature[f]['calling']][0]
         _remover = [func[1] for func in functions_list if func[0] == feature[f]['args']['noisy_data_remover']][0]
         feature[f]['calling'], feature[f]['args']['noisy_data_remover'] = _func, _remover

@@ -11,12 +11,13 @@ def generate_random_data_v2(start_date, end_date, amount_range, merchant_ids, di
     data = []
     count = 0
     merchant_ids = merchant_segments(amount_range, merchant_ids)
-    anomalies = np.concatenate([np.ones(5000), np.zeros(100000)], axis=0).tolist()
+    anomalies = np.concatenate([np.ones(2000), np.zeros(10000)], axis=0).tolist()
     segments = list(amount_range.keys())
     for c in customer_ids:
         _segs = random.sample(segments, 2)
         _merchants = [m for m in merchant_ids if m[1] in _segs]
         not_related_merchants = [m for m in merchant_ids if m[1] not in _segs]
+
         for m in _merchants:
             _start_date = start_date + timedelta(seconds=random.sample(list(range(1000)), 1)[0])
             while _start_date < end_date:
@@ -28,7 +29,7 @@ def generate_random_data_v2(start_date, end_date, amount_range, merchant_ids, di
                 _transaction = 'transaction_' + str(count)
                 d = {
                     'PaymentTransactionId': _transaction,
-                    'RequestInsertTime': start_date + timedelta(seconds=_sec),
+                    'RequestInsertTime': _start_date + timedelta(seconds=_sec),
                     'MerchantId': m[0],
                     'customer_id': c,
                     'Amount': _amount

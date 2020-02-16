@@ -1,22 +1,20 @@
 import datetime
 
-from data_manipuations import clustered_merchant_ratios_feature, customer_transaction_day_diff_feature
-from data_manipuations import customer_merchant_amount_ratio, last_month_of_total_transactions, gmm_cluster_p_value
-from data_manipuations import remove_noisy_data, gmm_customer_scoring, get_last_day_comparisions, customer_merchant_peak_drop
 
 
-is_local_run = False
+is_local_run = True
 is_min_max_norm = True
+run_from_sample_data = False
 sample_args = ['main.py', 'dashboard', '0']
-data_path = "transaction_data_all_sample.csv"
-features_data_path = "features_sample.csv"
+data_path = "transaction_data_all_sample_.csv"
+features_data_path = "features_.csv"
 test_data_path = 'test_data.csv'
 train_data_path = 'train_data.csv'
 auto_encoder_model_paths = {'ae': 'auto_encoder.json', 'ae_l': 'auto_encoder_linear.json'}
 model_iso_f_path = 'iso_forest.sav'
 hyper_parameter_path = 'hyper_parameters.json'
 feature_lstm_ae = 'features_lstm_ae.json'
-runs_at_sample_data = False
+feature_path = 'features.json'
 sample_size = 80000
 removing_columns = ['TransactionType', 'TerminalId', 'Created_Time_str', 'source_API', 'source_Common Payment',
                      'source_Donation UI', 'source_User Interface', 'merchant_terminal_id']
@@ -24,78 +22,6 @@ at_least_t_count_per_user = 8
 at_least_t_count_per_user_gmm = 8
 at_least_day_count_for_user = 8
 interval_point_for_k_deciding = 0.05
-
-feature = {
-    #'transaction_count': {'args': {
-    #                   'data': None,
-    #                   'noisy_data_remover': remove_noisy_data,
-    #                   'num_of_transaction_removing': at_least_t_count_per_user,
-    #                   'num_of_days_removing': at_least_day_count_for_user,
-    #                   'feature': 'transaction_count',
-    #                   'related_columns': [],
-    #               },
-    #              'calling': get_last_day_comparisions,
-    #              'name': 'Last Day Of Customer Transactions'
-    #},
-    'c_m_ratios': {'args': {
-                        'data': None,
-                        'noisy_data_remover': remove_noisy_data,
-                        'num_of_transaction_removing': at_least_t_count_per_user,
-                        'num_of_days_removing': at_least_day_count_for_user,
-                        'feature': 'c_m_ratios',
-                        'related_columns': []
-                    },
-                   'calling': clustered_merchant_ratios_feature,
-                   'name': 'C. - M. Transaction Ratio Scores'
-    },
-    'c_freq_diff_min_max_p_value': {'args': {
-                                        'data': None,
-                                        'noisy_data_remover': remove_noisy_data,
-                                        'num_of_transaction_removing': at_least_t_count_per_user,
-                                        'num_of_days_removing': at_least_day_count_for_user,
-                                        'feature': 'c_freq_diff',
-                                        'related_columns': [],
-                                        },
-                                    'calling': customer_transaction_day_diff_feature,
-                                    'name': 'C. Difference Of Each Transaction Score'
-    },
-    'c_m_med_amount_change_min_max_p_value': {'args': {
-                                                       'data': None,
-                                                       'noisy_data_remover': remove_noisy_data,
-                                                       'num_of_transaction_removing': at_least_t_count_per_user,
-                                                       'num_of_days_removing': at_least_day_count_for_user,
-                                                       'feature': 'c_m_med_amount_change', 'related_columns': []
-                                                       },
-                                              'name': 'C. M. Amount Change On Each Transaction Score',
-                                              'calling': customer_merchant_amount_ratio
-                                              },
-    'c_m_peak_drop_min_max_p_value': {'args': {
-                                                'data': None,
-                                                'noisy_data_remover': remove_noisy_data,
-                                                'num_of_transaction_removing': at_least_t_count_per_user,
-                                                'num_of_days_removing': at_least_day_count_for_user,
-                                                'feature': 'c_m_med_amount_change', 'related_columns': []
-                                            },
-                                                'name': 'C. M. Amount Change On Each Transaction Score',
-                                             'calling': customer_merchant_peak_drop
-    },
-    #'last_month_totals_min_max_p_value': {'args': {
-    #                                        'data': None,
-    #                                        'noisy_data_remover': remove_noisy_data,
-    #                                        'num_of_transaction_removing': at_least_t_count_per_user,
-    #                                        'num_of_days_removing': at_least_day_count_for_user,
-    #                                        'feature': 'last_month_of_total_transactions', 'related_columns': []},
-    #                                     'calling': last_month_of_total_transactions
-    #                                    },
-    #'gmm_min_max_p_value': {'args': {
-    #                            'data': None,
-    #                            'noisy_data_remover': remove_noisy_data,
-    #                            'num_of_transaction_removing': at_least_t_count_per_user_gmm,
-    #                            'num_of_days_removing': at_least_day_count_for_user,
-    #                            'feature': 'gmm_min_max_p_value', 'related_columns': []},
-    #                            'calling': gmm_customer_scoring
-    #                        }
-}
 
 anomaly_ratio = 0.001
 class_ratio = 0.005
@@ -110,12 +36,14 @@ outputs = ['label', 'label_iso', 'intersection_of_models']
 indicator_column_name = 'total_danger_value'
 
 sample_sizes = list(zip(['%20', '%30', '%40', '%50', '%75'], [.2, .3, .4, .5, 0.75]))
-models_output = {'label': 'Anomaly Classification', 'label_iso': 'Isolation Forest',
-                 'intersection_of_models': 'Intersection Of Models'}
+models_output = {'anomaly_ae_values': 'AutoEncoder Anomaly Score',
+                 'label_iso': 'Isolation Forest Labels',
+                 }
 related_columns = ['PaymentTransactionId', 'Created_Time', 'customer_id', 'merchant_id', 'label', 'label_iso', 'Amount']
 k_means_cluster_colors = ['cyan', 'red', 'red'] # ['darkgray', 'red']
-related_cols = ['customer_merchant_id', 'merchant_id', 'customer_id', 'Amount', 'label_iso', 'label_a_c',
-                'intersection_of_models',
+
+
+related_cols = ['customer_merchant_id', 'merchant_id', 'customer_id', 'Amount',
                 'Created_Time', 'c_m_label_t_count', 'c_m_t_count', 'c_freq_diff', 'RequestInsertTime']
 
 
@@ -126,10 +54,8 @@ features_cols_2 = {
     'c_m_med_amount_change': 'C. M. Amount Change On Each Transaction Score',
     'gmm': 'C. GMM Clustering Score'
 }
-for f in feature:
-    print(features_cols_2[feature[f]['args']['feature']])
-    features_cols_2[f] = features_cols_2[feature[f]['args']['feature']]
-print(features_cols_2)
+
+
 alpha = 0.05
 train_test_split_ratio = 0.3
 
@@ -155,3 +81,4 @@ diff_range = {'segment_1': {'value': list(range(1, 324000)), 'ratio': 0.5},
               'segment_4': {'value': list(range(1296000, 2592000)), 'ratio': 0.15},
               'segment_5': {'value': list(range(2592000, 5184000)), 'ratio': 0.15}
             }
+host, port = '127.0.0.1', 8050

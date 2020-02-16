@@ -151,11 +151,16 @@ def compute_optimum_k(df, alpha):
     standard_error = (2.58 * np.std(df['clusters_distance_diff'])) / sqrt(len(df))  # alpha = 0.05, (t_table = 1.96)
     df['is_lower_than_std_error'] = df['clusters_distance_diff'].apply(lambda x: 1 if x < standard_error else 0)
     # optimum k values min k which has difference less than standard error
-    return df[df['is_lower_than_std_error'] == 1].sort_values(by='k', ascending=True).to_dict('resuls')[0]['k']
+    print("Here are the optimum k Values :")
+    print(df[df['is_lower_than_std_error'] == 1].sort_values(by='k', ascending=True))
+    print("Optimum K with Elbow :")
+    print(df[df['is_lower_than_std_error'] == 1].sort_values(by='k', ascending=True).to_dict('results')[0]['k'])
+    return df[df['is_lower_than_std_error'] == 1].sort_values(by='k', ascending=True).to_dict('results')[0]['k']
 
 
 class MerchantClusters:
     def __init__(self, data):
+        print("KMeans is initialized For Merchant Clustering!!")
         self.data = data
         self.current_date = max(data['Created_Time']) + datetime.timedelta(days=1)
         self.frequency_merchant = None
@@ -248,11 +253,7 @@ def clustered_merchant_ratios_feature(data, feature):
     pv_1[feature] = pv_1['c_m_t_count'] / pv_1['c_m_label_t_count']
     pv_1 = pv_1.dropna()
     data = pd.merge(data, pv_1, on=['merchant_id', 'customer_id', 'merchant_label'], how='left')
-    data[feature] = 1 - data[feature]
     data[feature] = data[feature].fillna(0)
-    data[feature] = data.apply(lambda row: 0 if row['c_m_t_count'] in [1, 2, 3] else
-                                           0 if row[feature] < 0.8 else 1
-                               , axis=1)
     return data
 
 
