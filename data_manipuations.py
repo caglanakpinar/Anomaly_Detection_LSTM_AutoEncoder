@@ -35,7 +35,7 @@ def get_day_parts_of_data(c_m_dates, start, end, day_parts, renames):
         _start, _end, _count = c_m_dates[c_m]['start'], c_m_dates[c_m]['end'], c_m_dates[c_m]['total_t_count']
         c_m_days = int((end - start).total_seconds() / 60 / 60 / 24)
         while start < end:
-            days += list(product(c_m, c_m_days, _count, start, day_parts))
+            days += list(product([c_m], [c_m_days], [_count], [start], day_parts))
             start + datetime.timedelta(days=1)
     return pd.DataFrame(days).rename(columns=renames)
 
@@ -485,12 +485,14 @@ def get_customer_merchant_hourly_sequential_data(data, feature):
     group_cols = ['customer_merchant_id', 'Created_Time', 'day_part']
     day_parts = get_day_part()
     data['day_part'] = data['hour'].apply(lambda x: day_parts[x])
+    data['total_t_count'] = data['PaymentTransactionId']
     data_pv = data.pivot_table(index=group_cols,
-                               aggfunc={'Amount': 'median'}).reset_index()
+                               aggfunc={'Amount': 'median', 'total_t_count': 'count'}).reset_index()
     data_pv = data_pv.sort_values(by=group_cols, ascending=True)
     data_pv['start'], data_pv['end'] = data_pv['Created_Time'], data_pv['Created_Time']
     c_m_dates = data_pv.pivot_table(index='customer_merchant_id',
                                     aggfunc={'start': 'min', 'end': 'max', 'total_t_count': 'count'}).to_dict('index')
+    print()
     dates = get_day_parts_of_data(c_m_dates=c_m_dates,
                                   start=min(data['Created_Time']),
                                   end=max(data['Created_Time']),

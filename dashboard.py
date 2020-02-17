@@ -256,15 +256,11 @@ def create_dahboard(df_train, df):
             samples_dict[sample_sizes]['data'][['PaymentTransactionId', 'customer_merchant_id']].query(
                 "PaymentTransactionId == @hoverData")['customer_merchant_id'])[0]
 
-        dff = \
-        samples_dict[sample_sizes]['customer_transactions'].query("customer_merchant_id == @customer_merchant_id")[
+        dff = samples_dict[sample_sizes]['customer_transactions'].query("customer_merchant_id == @customer_merchant_id")[
             ['Amount', 'RequestInsertTime', 'label_iso']]
-        # dff = pd.DataFrame(zip(customers_of_amounts[customer_merchant_id]['Amount'], customers_of_amounts[customer_merchant_id]['RequestInsertTime']))
-        print(customer_merchant_id.split("_")[0])
         return {"data": [go.Scatter(x=dff['RequestInsertTime'], y=dff['Amount'], mode='markers')],
                 "layout": go.Layout(height=300,
-                                    title=fea_dict['c_m_peak_drop_min_max_p_value']['args']['name'] + " || C_M:" +
-                                        customer_merchant_id
+                                    title=fea_dict['c_m_peak_drop_min_max_p_value']['name'] + " || C_M:" + customer_merchant_id
                                     )
                 }
 
@@ -316,13 +312,11 @@ def create_dahboard(df_train, df):
         print(customer_merchant_id)
         return {"data": [go.Scatter(x=dff['RequestInsertTime'], y=dff['c_freq_diff'], mode='markers')],
                 "layout": go.Layout(height=300,
-                                    title="C. Difference Of Each Transaction Score || C_M:" + customer_merchant_id)
+                                    title="C. Difference Of Each Transaction Score")
                 }
     if is_local_run:
         webbrowser.open('http://127.0.0.1:8050/')
         app.run_server(debug=False)
     else:
-        app_is_open = True
-        while not app_is_open:
-            app.run_server(debug=False, port=port, host=host)
-            app_is_open = False
+        webbrowser.open('http://127.0.0.1:8050/')
+        return app.run_server(debug=False)# app.run_server(debug=False, port=port, host=host)

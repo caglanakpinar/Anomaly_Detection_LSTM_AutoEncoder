@@ -1,6 +1,8 @@
 import sys
+import webbrowser
 from feature_engineering import CreateFeatures
-from configs import is_local_run, sample_args, hyper_parameter_path
+from feature_engineering_lstm_ae import CreateFeaturesLSTM
+from configs import is_local_run, sample_args, hyper_parameter_path, port, host
 from model_train_iso_f import ModelTrainIsolationForest
 from model_train_ae import ModelTrainAutoEncoder
 from dashboard import create_dahboard
@@ -16,6 +18,9 @@ if __name__ == "__main__":
     if len(sys.argv) != 0:
         if (sys.argv[1]) == 'feature_engineering':
             create_feature = CreateFeatures(model_deciding=sys.argv[2])
+            create_feature.compute_features()
+        if (sys.argv[1]) == 'feature_engineering_lstm':
+            create_feature = CreateFeaturesLSTM(model_deciding=sys.argv[2])
             create_feature.compute_features()
         if (sys.argv[1]) == 'train_process':
             hyper_parameters = model_from_to_json(hyper_parameter_path, [], False)
@@ -42,6 +47,7 @@ if __name__ == "__main__":
             model_ae.calculating_loss_function(is_for_prediction=True)
             prediction = model_ae.test
             create_dahboard(model_iso_f.data, prediction)
+
     logger.get_time()
 
 

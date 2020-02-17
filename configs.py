@@ -2,12 +2,13 @@ import datetime
 
 
 
-is_local_run = True
+is_local_run = False
 is_min_max_norm = True
 run_from_sample_data = False
-sample_args = ['main.py', 'dashboard', '0']
-data_path = "transaction_data_all_sample_.csv"
-features_data_path = "features_.csv"
+sample_args = ['main.py', 'feature_engineering_lstm', 'all']
+data_path = "transaction_data_all_sample.csv"
+features_data_path = "features.csv"
+features_lstm_data_path = "features_lstm.json"
 test_data_path = 'test_data.csv'
 train_data_path = 'train_data.csv'
 auto_encoder_model_paths = {'ae': 'auto_encoder.json', 'ae_l': 'auto_encoder_linear.json'}
@@ -39,7 +40,7 @@ sample_sizes = list(zip(['%20', '%30', '%40', '%50', '%75'], [.2, .3, .4, .5, 0.
 models_output = {'anomaly_ae_values': 'AutoEncoder Anomaly Score',
                  'label_iso': 'Isolation Forest Labels',
                  }
-related_columns = ['PaymentTransactionId', 'Created_Time', 'customer_id', 'merchant_id', 'label', 'label_iso', 'Amount']
+related_columns = ['PaymentTransactionId', 'Created_Time', 'customer_id', 'merchant_id', 'anomaly_ae_values', 'label_iso', 'Amount']
 k_means_cluster_colors = ['cyan', 'red', 'red'] # ['darkgray', 'red']
 
 
@@ -81,4 +82,4 @@ diff_range = {'segment_1': {'value': list(range(1, 324000)), 'ratio': 0.5},
               'segment_4': {'value': list(range(1296000, 2592000)), 'ratio': 0.15},
               'segment_5': {'value': list(range(2592000, 5184000)), 'ratio': 0.15}
             }
-host, port = '127.0.0.1', 8050
+host, port = 'http://127.0.0.1', 8050
