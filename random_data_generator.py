@@ -21,7 +21,6 @@ def generate_random_data_v2(start_date, end_date, amount_range, merchant_ids, di
         for m in _merchants:
             _start_date = start_date + timedelta(seconds=random.sample(list(range(1000)), 1)[0])
             while _start_date < end_date:
-
                 _merchant_id = m[0]
                 _amount = random.sample(amount_range[m[1]]['value'], 1)[0]
                 _sec = random.sample(diff_range[m[1]]['value'], 1)[0]

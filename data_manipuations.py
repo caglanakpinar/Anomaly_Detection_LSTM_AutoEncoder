@@ -29,14 +29,14 @@ def get_day_part():
     return hour_dict
 
 
-def get_day_parts_of_data(c_m_dates, start, end, day_parts, renames):
+def get_day_parts_of_data(c_m_dates, start, end, renames):
     days = []
     for c_m in c_m_dates:
         _start, _end, _count = c_m_dates[c_m]['start'], c_m_dates[c_m]['end'], c_m_dates[c_m]['total_t_count']
         c_m_days = int((end - start).total_seconds() / 60 / 60 / 24)
-        while start < end:
-            days += list(product([c_m], [c_m_days], [_count], [start], day_parts))
-            start + datetime.timedelta(days=1)
+        while _start < _end:
+            days += list(product([c_m], [c_m_days], [_count], [_start]))
+            _start += datetime.timedelta(days=1)
     return pd.DataFrame(days).rename(columns=renames)
 
 
@@ -496,12 +496,14 @@ def get_customer_merchant_hourly_sequential_data(data, feature):
     dates = get_day_parts_of_data(c_m_dates=c_m_dates,
                                   start=min(data['Created_Time']),
                                   end=max(data['Created_Time']),
-                                  day_parts=list(day_parts.keys()),
-                                  renames={0: 'customer_merchant_id', 1: group_cols[0], 2: 'total_days',
-                                           3: group_cols[1], 4: group_cols[2]}
+                                  renames={0: group_cols[0], 1: 'total_days', 2: 'total_t_count',
+                                           3: group_cols[1]}
                                   )
+    dates['hour'] = dates['Created_Time'].apply(lambda x: x.hour)
+    dates['day_part'] = dates['hour'].apply(lambda x: day_parts[x])
     dates = pd.merge(dates, data_pv, on=group_cols, how='left')
     dates['Amount'] = dates['Amount'].fillna(0)
+    dates['customer_id'] = dates['customer_merchant_id'].apply(lambda x: x.split("_")[0])
     return dates
 
 
