@@ -5,6 +5,8 @@ import json
 import os
 from os import listdir
 from inspect import getmembers, isfunction
+import importlib
+import sys
 
 from configs import run_from_sample_data, sample_size, start_date, end_date, amount_range, merchant_ids
 from configs import diff_range, customer_ids, is_min_max_norm
@@ -74,3 +76,11 @@ def decide_feature_name(feature_path):
         else:
             feature_2[f] = feature[f]
     return feature_2
+
+
+def callfunc(my_file):
+    pathname, filename = os.path.split(my_file)
+    sys.path.append(os.path.abspath(pathname))
+    modname = os.path.splitext(filename)[0]
+    my_mod = importlib.import_module(modname)
+    return my_mod

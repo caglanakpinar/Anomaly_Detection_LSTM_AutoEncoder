@@ -1,5 +1,4 @@
 {
-  "isolation_forest": {"num_of_trees": 1000, "contamination": 0.01},
-    "feature_reduction": {"epochs":  40, "batch_size":  10000},
-    "auto_encoder": {"epochs":  40, "batch_size":  10000}
+  "iso_f": {"num_of_trees": 1000, "contamination": 0.001},
+    "ae": {"epochs":  30, "batch_size":  10000}
 }

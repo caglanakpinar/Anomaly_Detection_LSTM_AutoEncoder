@@ -1,11 +1,11 @@
 import datetime
 
 
-
 is_local_run = False
 is_min_max_norm = True
 run_from_sample_data = False
-sample_args = ['main.py', 'feature_engineering_lstm', 'all']
+run_gpu = False
+sample_args = ['main.py', 'train_process', '0', 'all']
 data_path = "transaction_data_all_sample.csv"
 features_data_path = "features.csv"
 features_lstm_data_path = "features_lstm.json"
@@ -16,6 +16,8 @@ model_iso_f_path = 'iso_forest.sav'
 hyper_parameter_path = 'hyper_parameters.json'
 feature_lstm_ae = 'features_lstm_ae.json'
 feature_path = 'features.json'
+learning_model_path = 'learning_models.json'
+pred_data_path = 'predicted_test_data.csv'
 sample_size = 80000
 removing_columns = ['TransactionType', 'TerminalId', 'Created_Time_str', 'source_API', 'source_Common Payment',
                      'source_Donation UI', 'source_User Interface', 'merchant_terminal_id']
