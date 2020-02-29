@@ -44,15 +44,15 @@ main.py dashboard 0
 
 ## Metrics
 
-# 1. Customer Of Merchant Transactions Counts:
+### 1. Customer Of Merchant Transactions Counts:
 
  If a transaction occurs from a merchant that the customer has no transaction from, it would be abnormal transaction.
  
-# 2. Transaction of frequencies of each customer:
+### 2. Transaction of frequencies of each customer:
 
 For instance, let's saya customer has transaction of each month suddenlt if the customer use the card for every hour this would abnormal transactions
 
-# 3. Sudden drop and peak of each customer - merchant of amounts on each transaction:
+### 3. Sudden drop and peak of each customer - merchant of amounts on each transaction:
 
 It can assume that each customer - merchant can not be huge drop or increase suddenly. This would be abnormal transaction
 
