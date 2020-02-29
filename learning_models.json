@@ -1,0 +1,22 @@
+{
+  "iso_f": {"args":  {"data":  "features.csv",
+                      "feature_set":  "feature.json",
+                      "py_file": "model_train_iso_f.py",
+                      "calling": "ModelTrainIsolationForest",
+                      "train": "learning_process_iso_f",
+                      "prediction": "prediction_iso_f",
+                      "pred_field": "label_iso",
+                      "uid": "PaymentTransactionId"
+            }, "name":  "Isolation Forest"
+  },
+  "ae_multi": {"args":  {"data":  "features.csv",
+                      "feature_set":  "feature.json",
+                      "py_file": "model_train_ae.py",
+                      "calling": "ModelTrainAutoEncoders",
+                      "train": "model_train",
+                      "prediction": "calculating_loss_function",
+                      "pred_field": "anomaly_ae_values",
+                      "uid": "PaymentTransactionId"
+            }, "name":  "AutoEncoder"
+  }
+}
