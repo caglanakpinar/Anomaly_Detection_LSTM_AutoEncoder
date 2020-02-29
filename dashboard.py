@@ -258,7 +258,7 @@ def create_dahboard(df_train, df):
 
         dff = samples_dict[sample_sizes]['customer_transactions'].query("customer_merchant_id == @customer_merchant_id")[
             ['Amount', 'RequestInsertTime', 'label_iso']]
-        return {"data": [go.Scatter(x=dff['RequestInsertTime'], y=dff['Amount'], mode='markers')],
+        return {"data": [go.Scatter(x=dff['RequestInsertTime'], y=dff['Amount'], mode='markers', marker=dict(size=[20]))],
                 "layout": go.Layout(height=300,
                                     title=fea_dict['c_m_peak_drop_min_max_p_value']['name'] + " || C_M:" + customer_merchant_id
                                     )

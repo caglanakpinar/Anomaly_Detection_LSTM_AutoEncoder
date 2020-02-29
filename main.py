@@ -61,8 +61,7 @@ if __name__ == "__main__":
             model = ModelTrainIsolationForest(last_day_predictor=int(sys.argv[2]))
             model.train_test_split()
             if sys.argv[-2] == 'dashboard': # runs multivariate dashboard
-                create_dahboard(model.train, get_data(pred_data_path, True),
-                                 decide_feature_name(feature_path), sample_sizes)
+                create_dahboard(model.train, get_data(pred_data_path, True))
         logger.get_time()
 
 
