@@ -13,8 +13,8 @@
                       "feature_set":  "feature.json",
                       "py_file": "model_train_ext_iso_f.py",
                       "calling": "ModelTrainExtendedIsolationForest",
-                      "train": "learning_process_ext_iso_f",
-                      "prediction": "prediction_ext_iso_f",
+                      "train": "learning_process_prediction_ext_iso_f",
+                      "prediction": "learning_process_prediction_ext_iso_f",
                       "pred_field": "label_e_iso",
                       "uid": "PaymentTransactionId"
             }, "name":  "Extended Isolation Forest"

@@ -9,49 +9,8 @@ import datetime
 import webbrowser
 
 from configs import sample_sizes, k_means_cluster_colors, related_cols, feature_path, host, port
-from configs import models_output, related_columns, is_local_run, features_cols_2
-from data_access import decide_feature_name
-
-
-def get_last_day_comparisions(data):
-    data['amount_mean'], data['amount_max'], data['amount_min'] = data['Amount'], data['Amount'], data['Amount']
-    data['amount_total'] = data['Amount']
-    data['amount_median'] = data['Amount']
-    data['transaction_count'] = data['PaymentTransactionId']
-    data['day'] = data['Created_Time'].apply(lambda x: datetime.datetime.strptime(str(x)[0:10], '%Y-%m-%d'))
-    data_pv = data.pivot_table(index=['customer_id', 'day'], aggfunc={'amount_mean': 'mean',
-                                                                      'amount_median': 'median',
-                                                                      'amount_max': 'max',
-                                                                      'amount_min': 'min',
-                                                                      'amount_total': 'sum',
-                                                                      'transaction_count': 'count',
-                                                                      }).reset_index()
-    return data_pv.sort_values(by=['customer_id', 'day'])
-
-
-def calculate_last_day_differences(df, calculate_cols):
-    # Prev Daily Transaction To Last Day Transaction
-    df[calculate_cols + '_prev'] = df.sort_values(['day', 'customer_id'], ascending=True).groupby('customer_id')[
-        calculate_cols].shift(1)
-    treatment_2 = df[df['is_last_day'] == 1]
-    treatment_2[calculate_cols + '_last_2_days_diff'] = treatment_2.apply(lambda row:
-                                                                          row[calculate_cols] - row[
-                                                                              calculate_cols + '_prev'] if row[
-                                                                                                               calculate_cols + '_prev'] ==
-                                                                                                           row[
-                                                                                                               calculate_cols + '_prev'] else None,
-                                                                          axis=1)
-    df = pd.merge(df, treatment_2[['customer_id', calculate_cols + '_last_2_days_diff']], on='customer_id', how='left')
-
-    # Last Day Transaction to Historic Daily Max Transaction Count to Last Day Of Trasaction Count
-    treatment_4 = df.query("is_last_day == 0")
-    treatment_4 = treatment_4.pivot_table(index=['customer_id'], aggfunc={calculate_cols: 'max'}
-                                          ).reset_index().rename(columns={calculate_cols: 'max_' + calculate_cols})
-    treatment_2 = pd.merge(treatment_2, treatment_4, on='customer_id', how='left')
-    treatment_2[calculate_cols + '_max_to_last_day_diff'] = treatment_2.apply(
-        lambda row: row['transaction_count'] - row['max_' + calculate_cols], axis=1)
-    return pd.merge(df, treatment_2[['customer_id', calculate_cols + '_max_to_last_day_diff']], on='customer_id',
-                    how='left')
+from configs import models_output, related_columns, is_local_run, learning_model_path
+from data_access import decide_feature_name, model_from_to_json
 
 
 def get_sample_from_data(main_data, sample_ratio, bias_data_condition=None):
@@ -60,15 +19,7 @@ def get_sample_from_data(main_data, sample_ratio, bias_data_condition=None):
     sample_size = int(len(main_data) * sample_ratio)
     random_index = set(random.sample(list(range(len(main_data))), sample_size) + bias_index)
     indexes = list(main_data.index)
-    print(len(list(set(random_index) & set(main_data.index))))
     return main_data.ix[list(set(random_index) & set(main_data.index))].reset_index()
-
-
-def get_samples(df):
-    samples_dict = {}
-    for s in sample_sizes:
-        samples_dict[s[0]] = get_sample_from_data(df, s[1])
-    return samples_dict
 
 
 def dashboard_init():
@@ -79,7 +30,10 @@ def dashboard_init():
 def create_dahboard(df_train, df):
     fea_dict = decide_feature_name(feature_path)
     feature = list(fea_dict.keys())
-    df_train['label_iso'], df_train['anomaly_ae_values'] = 0, 0
+    model_dict = model_from_to_json(learning_model_path, [], False)
+    models_output = {model_dict[m]['args']['pred_field']: model_dict[m]['name'] for m in model_dict}
+    for m in models_output:
+        df_train[m] = 0
     df_train = pd.concat([df_train[related_cols + feature + list(models_output.keys())].reset_index(drop=True),
                           df[related_cols].reset_index(drop=True)]).query("Amount == Amount")
     customer_merchant_ratios = df_train.pivot_table(index=['customer_id', 'merchant_id'],
@@ -236,7 +190,7 @@ def create_dahboard(df_train, df):
             go.Bar(name='C. Total Transaction On Merchant', x=dff['merchant_id'], y=dff['c_m_t_count']),
             go.Bar(name='total Anomaly', x=dff['merchant_id'], y=dff['label_iso'], marker_color='red')],
                 "layout": go.Layout(height=300,
-                                    title=features_cols_2['c_m_ratios'] + " || Card: " + customer_id,
+                                    title=fea_dict['c_m_ratios']['name'] + " || Card: " + customer_id,
                                     )
                 }
 
@@ -260,7 +214,7 @@ def create_dahboard(df_train, df):
             ['Amount', 'RequestInsertTime', 'label_iso']]
         return {"data": [go.Scatter(x=dff['RequestInsertTime'], y=dff['Amount'], mode='markers', marker=dict(size=[20]))],
                 "layout": go.Layout(height=300,
-                                    title=fea_dict['c_m_peak_drop_min_max_p_value']['name'] + " || C_M:" + customer_merchant_id
+                                    title=fea_dict['c_m_peak_drop_min_max_p_value']['name'] + " || C_M:" + customer_merchant_id if customer_merchant_id is not None else " - "
                                     )
                 }
 

@@ -1,7 +1,7 @@
 import datetime
 
 
-is_local_run = True
+is_local_run = False
 is_min_max_norm = True
 run_from_sample_data = False
 run_gpu = False
@@ -20,8 +20,7 @@ feature_path = 'features.json'
 learning_model_path = 'learning_models.json'
 pred_data_path = 'predicted_test_data.csv'
 sample_size = 80000
-removing_columns = ['TransactionType', 'TerminalId', 'Created_Time_str', 'source_API', 'source_Common Payment',
-                     'source_Donation UI', 'source_User Interface', 'merchant_terminal_id']
+
 at_least_t_count_per_user = 8
 at_least_t_count_per_user_gmm = 8
 at_least_day_count_for_user = 8
@@ -42,6 +41,7 @@ indicator_column_name = 'total_danger_value'
 sample_sizes = list(zip(['%20', '%30', '%40', '%50', '%75'], [.2, .3, .4, .5, 0.75]))
 models_output = {'anomaly_ae_values': 'AutoEncoder Anomaly Score',
                  'label_iso': 'Isolation Forest Labels',
+                 'label_e_iso' : "Extended Isolation Forest"
                  }
 related_columns = ['PaymentTransactionId', 'Created_Time', 'customer_id', 'merchant_id', 'anomaly_ae_values', 'label_iso', 'Amount']
 k_means_cluster_colors = ['cyan', 'red', 'red'] # ['darkgray', 'red']

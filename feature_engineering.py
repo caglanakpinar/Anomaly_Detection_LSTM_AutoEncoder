@@ -1,7 +1,7 @@
 import warnings
 warnings.filterwarnings("ignore")
 
-from configs import data_path, removing_columns, features_data_path, alpha, feature_path
+from configs import data_path, features_data_path, alpha, feature_path
 from data_access import get_data, write_to_csv, decide_feature_name
 from data_manipuations import get_p_value, get_descriptive_stats
 from logger import get_time
@@ -14,7 +14,6 @@ class CreateFeatures:
         self.data = get_data(path=self.data_path, is_for_model=False)
         self.columns = list(self.data.columns)
         self.features = decide_feature_name(feature_path)
-        self.removing_columns = removing_columns
         self.model_deciding = model_deciding
 
     def deciding_computing_features(self):
@@ -36,10 +35,6 @@ class CreateFeatures:
     def features_data_arrange(self):
         for f in self.features:
             self.features[f]['args']['data'] = self.data
-
-    def removig_columns(self):
-        if len(self.removing_columns) != 0:
-            self.data = self.data.drop(list(set(list(self.data.columns) & set(self.removing_columns))), axis=1)
 
     def labeling_anormalities(self, f):
         # TODO: Each Feaure of Right Side outlies detected y T- Normal Distribution For each Transaction.

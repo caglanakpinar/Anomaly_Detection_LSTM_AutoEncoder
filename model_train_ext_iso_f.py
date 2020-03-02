@@ -39,27 +39,20 @@ class ModelTrainExtendedIsolationForest:
             self.test = self.data[self.data[date_col] >= train_end_date]
         print("train set :", len(self.train), " || test set :", len(self.test))
 
-    def get_x_values(self, is_for_prediction):
-        self.X = self.test[self.features].values if is_for_prediction else self.train[self.features].values
+    def get_x_values(self):
+        self.X = self.data[self.features].values
 
-    def learning_process_ext_iso_f(self):
+    def learning_process_prediction_ext_iso_f(self):
         print("Extended isolation forest train process is initialized!!")
         get_time()
-        self.train_test_split()
-        self.get_x_values(is_for_prediction=False)
+        self.get_x_values()
         self.model_e_iso_f = iso.iForest(self.X,
                                          ntrees=self.params['num_of_trees'],
                                          sample_size=self.params['sample_size'],
                                          ExtensionLevel=len(self.features)-1)
+        self.data[self.model_params['args']['pred_field']] = self.model_e_iso_f.compute_paths(X_in=self.X)
+        self.train_test_split()
         print("Extended Isolation Forest Model Train Process Done!")
 
-    def prediction_ext_iso_f(self):
-        print("Extended Isolation Forest Prediction Process Initialized!")
-        get_time()
-        self.learning_process_ext_iso_f()
-        self.train_test_split()
-        self.get_x_values(is_for_prediction=True)
-        self.test[self.model_params['args']['pred_field']] = self.model_e_iso_f.compute_paths(X_in=self.X)
-        print("Extended Isolation Forest Prediction Process Done!")
 
 
