@@ -1,4 +1,5 @@
 {
   "iso_f": {"num_of_trees": 1000, "contamination": 0.001},
+  "e_iso_f": {"num_of_trees": 1000, "sample_size": 100},
     "ae": {"epochs":  30, "batch_size":  10000}
 }

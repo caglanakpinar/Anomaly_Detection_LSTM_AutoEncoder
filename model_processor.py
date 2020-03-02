@@ -48,7 +48,7 @@ class trainModel:
                     _file_path = join(dirname(__file__), self.models[m]['args']['py_file'])
                     model_py = callfunc(_file_path)
                     model = [o[1] for o in getmembers(model_py) if o[0] == self.models[m]['args']['calling']][0]
-                    model = model(hyper_parameters=self.hyper_parameters,
+                    model = model(hyper_parameters=self.hyper_parameters[m],
                                   last_day_predictor=self.params['is_training_with_c_of_last_transactions'],
                                   params=self.models[m])
                     _module = self.models[m]['args']['prediction'] if self.is_pred else self.models[m]['args']['train']
