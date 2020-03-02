@@ -19,14 +19,14 @@ from logger import get_time
 
 
 class ModelTrainAutoEncoders:
-    def __init__(self, hyper_parameters=None, test_data=None, last_day_predictor=None, params=None):
+    def __init__(self, hyper_parameters=None, last_day_predictor=None, params=None):
         get_time()
         self.data = get_data(features_data_path, True)
         self.features = list(decide_feature_name(feature_path).keys())
-        self.tuned_parameters = hyper_parameters
+        self.params = hyper_parameters
         self.last_day_predictor = last_day_predictor
         self.model_params = params
-        self.train, self.test = None, None if test_data is None else test_data
+        self.train, self.test = None, None
         self.X, self.y_pred, self.y = None, None, None
         self.input, self.fr_output = None, None
         self.model_ae, self.model_ae_l, self.model_u = None, None, None
@@ -87,13 +87,13 @@ class ModelTrainAutoEncoders:
                 sess.run(tf.global_variables_initializer())
                 config = tf.ConfigProto(log_device_placement=True)
                 self.model_ae.fit(self.X, self.X,
-                                  epochs=int(self.tuned_parameters['ae']['epochs']),
-                                  batch_size=int(self.tuned_parameters['ae']['batch_size']),
+                                  epochs=int(self.params['epochs']),
+                                  batch_size=int(self.params['batch_size']),
                                   validation_split=0.2, shuffle=True)
         else:
             self.model_ae.fit(self.X, self.X,
-                              epochs=int(self.tuned_parameters['ae']['epochs']),
-                              batch_size=int(self.tuned_parameters['ae']['batch_size']),
+                              epochs=int(self.params['epochs']),
+                              batch_size=int(self.params['batch_size']),
                               validation_split=0.2, shuffle=True)
         self.model_from_to_json(auto_encoder_model_paths['ae'], self.model_ae, is_writing=True)
 

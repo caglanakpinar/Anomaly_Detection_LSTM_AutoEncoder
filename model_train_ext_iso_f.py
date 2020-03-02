@@ -1,16 +1,17 @@
 import joblib
-from sklearn.ensemble import IsolationForest
+import eif as iso
 
 from configs import date_col, train_end_date, features_data_path, feature_path
 from data_access import decide_feature_name
-from configs import model_iso_f_path
+from configs import model_ext_iso_f_path
 from data_access import get_data
 from logger import get_time
 
 
-class ModelTrainIsolationForest:
+class ModelTrainExtendedIsolationForest:
     """
     This class works for isolation forest. It gathers paramteres from hyper_parmaters.json.
+    For now, it seems that save mode is not available
     1. Split data to train and test set according to last_day_predictor
     2. get X fautere set assign to X. X values shape according to prediction or train env.
     3. Train model by using scikit-learn Isolation Forest Module.
@@ -26,7 +27,7 @@ class ModelTrainIsolationForest:
         self.model_params = params
         self.train, self.test = None, None
         self.X = None
-        self.model_iso = None
+        self.model_e_iso_f = None
         self.last_day_predictor = last_day_predictor  # splitting data indicator
 
     def train_test_split(self):
@@ -41,30 +42,24 @@ class ModelTrainIsolationForest:
     def get_x_values(self, is_for_prediction):
         self.X = self.test[self.features].values if is_for_prediction else self.train[self.features].values
 
-    def model_from_to_pickle(self, is_writing):
-        return joblib.load(model_iso_f_path) if not is_writing else joblib.dump(self.model_iso, model_iso_f_path)
-
-    def learning_process_iso_f(self):
-        print("isolation forest train process is initialized!!")
+    def learning_process_ext_iso_f(self):
+        print("Extended isolation forest train process is initialized!!")
         get_time()
         self.train_test_split()
         self.get_x_values(is_for_prediction=False)
-        self.model_iso = IsolationForest(n_estimators=self.params['num_of_trees'],
-                                         max_samples='auto',
-                                         contamination=self.params['contamination'],
-                                         bootstrap=False,
-                                         n_jobs=-1, random_state=42, verbose=1).fit(self.X)
-        self.model_from_to_pickle(True)
-        print("Isolation Forest Model Train Process Done!")
+        self.model_e_iso_f = iso.iForest(self.X,
+                                         ntrees=self.params['num_of_trees'],
+                                         sample_size=self.params['sample_size'],
+                                         ExtensionLevel=len(self.features)-1)
+        print("Extended Isolation Forest Model Train Process Done!")
 
-    def prediction_iso_f(self):
-        print("Isolation Forest Prediction Process Initialized!")
+    def prediction_ext_iso_f(self):
+        print("Extended Isolation Forest Prediction Process Initialized!")
         get_time()
+        self.learning_process_ext_iso_f()
         self.train_test_split()
-        self.model_iso = self.model_from_to_pickle(is_writing=False)
         self.get_x_values(is_for_prediction=True)
-        self.model_iso.n_jobs = -1
-        self.test[self.model_params['args']['pred_field']] = self.model_iso.predict(self.X)
-        print("Isolation Forest Prediction Process Done!")
+        self.test[self.model_params['args']['pred_field']] = self.model_e_iso_f.compute_paths(X_in=self.X)
+        print("Extended Isolation Forest Prediction Process Done!")
 
 

@@ -1,11 +1,11 @@
 import datetime
 
 
-is_local_run = False
+is_local_run = True
 is_min_max_norm = True
 run_from_sample_data = False
 run_gpu = False
-sample_args = ['main.py', 'train_process', '0', 'all']
+sample_args = ['main.py', 'prediction', '0', 'all']
 data_path = "transaction_data_all_sample.csv"
 features_data_path = "features.csv"
 features_lstm_data_path = "features_lstm.json"
@@ -13,6 +13,7 @@ test_data_path = 'test_data.csv'
 train_data_path = 'train_data.csv'
 auto_encoder_model_paths = {'ae': 'auto_encoder.json', 'ae_l': 'auto_encoder_linear.json'}
 model_iso_f_path = 'iso_forest.sav'
+model_ext_iso_f_path = 'extended_iso_forest.sav'
 hyper_parameter_path = 'hyper_parameters.json'
 feature_lstm_ae = 'features_lstm_ae.json'
 feature_path = 'features.json'
