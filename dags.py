@@ -51,7 +51,7 @@ bash_1 >> task_1 >> bash_2
 
 # Train Process
 count = 0
-for m in model_from_to_json(learning_model_path, [], False):
+for m in ['iso_f', 'e_iso_f', 'ae']:
     _task_2 = PythonOperator(task_id='fe_' + str(count),
                              op_kwargs={'args': ['main.py', 'train_process', '0', m]},
                              python_callable=main,
