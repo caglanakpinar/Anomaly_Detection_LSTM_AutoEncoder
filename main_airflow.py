@@ -8,14 +8,15 @@ import logger
 from data_access import model_from_to_json, get_data
 from model_processor import trainModel
 
-if __name__ == "__main__":
+
+def main(args):
     logger.get_time()
     if is_local_run:
-        sys.argv = sample_args
+        args = sample_args
     sys.stdout = logger.Logger()
     print("*"*3, " args :", sys.argv)
-    if len(sys.argv) != 0:
-        if sys.argv[1] == 'feature_engineering':
+    if len(args) != 0:
+        if (args[1]) == 'feature_engineering':
             """
             run from terminal: python main.py feature_engineering all
             all: create all features which are at features.json
@@ -24,7 +25,7 @@ if __name__ == "__main__":
             create_feature = CreateFeatures(model_deciding=sys.argv[2])
             create_feature.compute_features()
 
-        if sys.argv[1] == 'train_process':
+        if (args[1]) == 'train_process':
             # TODO: description must be updated
             """
             run from terminal: python main.py train_process 0
@@ -32,7 +33,7 @@ if __name__ == "__main__":
                  1: test data is last day of each customer
             Models: isolation forest and AutoEncoder for Multivariate and Univariate Models
             """
-            train = trainModel(args=sys.argv)
+            train = trainModel(args=args)
             train.process()
 
         if sys.argv[1] == 'prediction':
@@ -43,10 +44,10 @@ if __name__ == "__main__":
                  1: test data is last day of each customer
             It creates prediction values for each transaction is added to raw data set
             """
-            prediction = trainModel(args=sys.argv, is_prediction=True)
+            prediction = trainModel(args=args, is_prediction=True)
             prediction.process()
 
-        if sys.argv[1] == 'dashboard':
+        if args[1] == 'dashboard':
             # TODO: description must be updated
             """
             run from terminal: python main.py dashboard 0 # 10.20.10.196:3030
