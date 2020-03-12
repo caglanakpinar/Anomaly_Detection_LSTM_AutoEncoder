@@ -10,7 +10,7 @@
                       "uid": {"0": "PaymentTransactionId"}
             }, "name":  "Isolation Forest"
   },
-  "ae_multi": {"args":  {"data":  "features.csv",
+  "ae": {"args":  {"data":  "features.csv",
                          "feature_set":  "features.json",
                          "prediction_data": "predictions.csv",
                          "py_file": "model_train_ae.py",
@@ -20,18 +20,6 @@
                          "pred_field": "anomaly_ae_values",
                          "uid": {"0": "PaymentTransactionId"}
             }, "name":  "AutoEncoder"
-  },
-  "ae_uni": {"args":  {"data":  "features.csv",
-                      "feature_set":  "features.json",
-                      "prediction_data": "predictions.csv",
-                      "model_file": "model_dbscan.json",
-                      "py_file": "model_train_ae.py",
-                      "calling": "ModelTrainAutoEncoders",
-                      "train": "model_train_univariate",
-                      "prediction": "calculating_loss_function_uni",
-                      "pred_field": "a_ae_",
-                      "uid": {"0": "PaymentTransactionId"}
-            }, "name":  "AutoEncoder univariate"
   },
   "dbscan": {"args":  {"data":  "features.csv",
                        "feature_set":  "features.json",

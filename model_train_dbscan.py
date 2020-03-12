@@ -5,7 +5,7 @@ import joblib
 from sklearn.cluster import DBSCAN
 from sklearn.cluster import KMeans
 
-from configs import date_col, train_end_date, main_data_path, divide
+from configs import date_col, train_end_date, main_data_path
 from data_access import decide_feature_name, model_from_to_json
 from data_access import get_data
 from logger import get_time
@@ -18,6 +18,7 @@ def get_query_str(f, c):
     :param c: centriod list, same size as features
     :return: query string
     """
+    print([f[1] + " >= " + str(f[0]) + " and " for f in zip(c, f)])
     return "  ".join([f[1] + " >= " + str(f[0]) + " and " for f in zip(c, f) if f[0] == f[0]])[:-4]
 
 
@@ -87,10 +88,18 @@ class ModelTrainDBScan:
         self.o_epsilon = compute_optimum_parameter(self.eps, 'eps', 'outliers', sorting=True)
 
     def get_x_values(self, div):
-        self.X = self.data.query(get_query_str(self.features, np.array(self.centroids) / div))[self.features].values
+        self.po_data = self.data.query(get_query_str(self.features, np.array(self.centroids) / div))
+        self.X = self.po_data[self.features].values
 
     def get_distance_of_outliers(self, condition, indicator):
-        return [indicator(self.po_data[self.po_data[self.model_params['args']['pred_field']] != -1][f], f) for f in self.features]
+        values = []
+        for f in self.features:
+            val = 0
+            if len(self.po_data.query(condition)[f]) != 0:
+                if indicator(self.po_data.query(condition)[f]) == indicator(self.po_data.query(condition)[f]):
+                    val = indicator(self.po_data.query(condition)[f])
+            values.append(val)
+        return values
 
     def learning_process_dbscan(self):
         print("DBSCAN train process is initialized!!")
@@ -104,19 +113,21 @@ class ModelTrainDBScan:
         print({'eps': self.o_epsilon, 'min_samples': self.o_min_sample, 'centroids': {c for c in self.centroids}})
         print("Optimum Centriod Divison is Initialized!!!")
         cal_divs = []
-        for div in range(divide):
+        for div in range(2, self.params['centroid_divide_range']):
+            print("divide :", div)
             self.get_x_values(div)
-            print(self.X)
-            self.po_data['labels'] = DBSCAN(eps=self.o_epsilon,
-                                            min_samples=len(self.po_data) - self.o_min_sample,
+            print(len(self.po_data) - self.o_min_sample)
+            self.po_data['label_dbscan'] = DBSCAN(eps=self.o_epsilon,
+                                            min_samples= len(self.po_data) - self.o_min_sample,
                                             n_jobs=-1).fit(self.X).labels_
-            cal_divs.append({"cal": np.mean(np.abs(np.sum([self.get_distance_of_outliers("labels != -1", max),
-                                                          np.multiply(self.get_distance_of_outliers("labels == -1", min), -1)]))), "div": div})
+            cal_divs.append({"cal": np.mean(np.abs(np.sum([self.get_distance_of_outliers("label_dbscan != -1", max),
+                                                           np.multiply(self.get_distance_of_outliers("label_dbscan == -1", min), -1)]))), "div": div})
         print("optimum centriod distance to outliers results :")
         print(cal_divs)
         self.o_devision = list(pd.DataFrame(cal_divs).sort_values(by='cal', ascending=False)['div'])[0]
         print("optimum ", self.o_devision)
-        print({'eps': self.o_epsilon, 'min_samples': self.o_min_sample, 'centroids': {c for c in self.centroids}})
+        print({'eps': self.o_epsilon, 'min_samples': self.o_min_sample,
+               'centroids': {c for c in self.centroids}, "div": self.o_devision})
         model_from_to_json(main_data_path + self.model_params['args']['model_file'],
                            {'eps': self.o_epsilon,
                             'min_samples': self.o_min_sample,
