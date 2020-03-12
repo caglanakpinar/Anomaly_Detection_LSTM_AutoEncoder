@@ -1,7 +1,7 @@
 import datetime
 
 
-is_local_run = True
+is_local_run = False
 is_min_max_norm = True
 run_from_sample_data = False
 run_gpu = False
