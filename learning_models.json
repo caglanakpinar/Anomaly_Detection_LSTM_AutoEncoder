@@ -1,32 +1,48 @@
 {
   "iso_f": {"args":  {"data":  "features.csv",
-                      "feature_set":  "feature.json",
+                      "feature_set_path": "features.json",
+                      "prediction_data": "predictions.csv",
                       "py_file": "model_train_iso_f.py",
                       "calling": "ModelTrainIsolationForest",
                       "train": "learning_process_iso_f",
                       "prediction": "prediction_iso_f",
                       "pred_field": "label_iso",
-                      "uid": "PaymentTransactionId"
+                      "uid": {"0": "PaymentTransactionId"}
             }, "name":  "Isolation Forest"
   },
-  "e_iso_f": {"args":  {"data":  "features.csv",
-                      "feature_set":  "feature.json",
-                      "py_file": "model_train_ext_iso_f.py",
-                      "calling": "ModelTrainExtendedIsolationForest",
-                      "train": "learning_process_prediction_ext_iso_f",
-                      "prediction": "learning_process_prediction_ext_iso_f",
-                      "pred_field": "label_e_iso",
-                      "uid": "PaymentTransactionId"
-            }, "name":  "Extended Isolation Forest"
+  "ae_multi": {"args":  {"data":  "features.csv",
+                         "feature_set":  "features.json",
+                         "prediction_data": "predictions.csv",
+                         "py_file": "model_train_ae.py",
+                         "calling": "ModelTrainAutoEncoders",
+                         "train": "model_train",
+                         "prediction": "calculating_loss_function",
+                         "pred_field": "anomaly_ae_values",
+                         "uid": {"0": "PaymentTransactionId"}
+            }, "name":  "AutoEncoder"
   },
-  "ae": {"args":  {"data":  "features.csv",
-                      "feature_set":  "feature.json",
+  "ae_uni": {"args":  {"data":  "features.csv",
+                      "feature_set":  "features.json",
+                      "prediction_data": "predictions.csv",
+                      "model_file": "model_dbscan.json",
                       "py_file": "model_train_ae.py",
                       "calling": "ModelTrainAutoEncoders",
-                      "train": "model_train",
-                      "prediction": "calculating_loss_function",
-                      "pred_field": "anomaly_ae_values",
-                      "uid": "PaymentTransactionId"
-            }, "name":  "AutoEncoder"
+                      "train": "model_train_univariate",
+                      "prediction": "calculating_loss_function_uni",
+                      "pred_field": "a_ae_",
+                      "uid": {"0": "PaymentTransactionId"}
+            }, "name":  "AutoEncoder univariate"
+  },
+  "dbscan": {"args":  {"data":  "features.csv",
+                       "feature_set":  "features.json",
+                       "prediction_data": "predictions_last_day.csv",
+                       "model_file": "model_dbscan.json",
+                       "py_file": "model_train_dbscan.py",
+                       "calling": "ModelTrainDBScan",
+                       "train": "learning_process_dbscan",
+                       "prediction": "prediction_dbscan",
+                       "pred_field": "label_dbscan",
+                       "uid": {"0": "PaymentTransactionId"}
+            }, "name":  "DBScan Outlier"
   }
 }
