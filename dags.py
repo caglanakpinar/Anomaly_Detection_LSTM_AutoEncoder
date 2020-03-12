@@ -4,8 +4,6 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.operators.bash_operator import BashOperator
 
 from main_airflow import main
-from data_access import model_from_to_json
-from configs import learning_model_path
 
 
 

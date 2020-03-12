@@ -17,6 +17,7 @@ class trainModel:
         self.files = [f for f in listdir(dirname(abspath(__file__)))]
         self.is_pred = is_prediction
         self.pred_data = []
+        self.uids = []
 
     def define_train_args(self):
         self.params = {
@@ -29,11 +30,11 @@ class trainModel:
             self.pred_data = self.pred_data.drop(list(set(pred_cols) & set(self.pred_data.columns)), axis=1)
 
     def get_pred_concat(self, m, data):
+        self.uids = [self.models[m]['args']['uid'][num] for num in self.models[m]['args']['uid']]
         pred_cols = [col for col in data.columns if len(col.split(self.models[m]['args']['pred_field'])) ==2]
         if len(self.pred_data) != 0:
             self.check_features_existed(pred_cols)
-            self.pred_data = pd.merge(self.pred_data, data[[self.models[m]['args']['uid']] + pred_cols],
-                                      on=self.models[m]['args']['uid'], how='left')
+            self.pred_data = pd.merge(self.pred_data, data[self.uids + pred_cols], on=self.uids, how='left')
         else:
             self.pred_data = data
 
