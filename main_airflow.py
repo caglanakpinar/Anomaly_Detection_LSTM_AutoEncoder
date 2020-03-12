@@ -14,7 +14,7 @@ def main(args):
     if is_local_run:
         args = sample_args
     sys.stdout = logger.Logger()
-    print("*"*3, " args :", sys.argv)
+    print("*"*3, " args :", args)
     if len(args) != 0:
         if (args[1]) == 'feature_engineering':
             """
@@ -22,7 +22,7 @@ def main(args):
             all: create all features which are at features.json
             Ex: 'python main.py feature_engineering c_m_ratios' create only 'c_m_ratios' adds to features set.
             """
-            create_feature = CreateFeatures(model_deciding=sys.argv[2])
+            create_feature = CreateFeatures(model_deciding=args[2])
             create_feature.compute_features()
 
         if (args[1]) == 'train_process':
@@ -58,10 +58,11 @@ def main(args):
             Dashboard for Multi - Uni Models is created
             """
             # TODO: get prediction data from predicted .csv file
-            model = ModelTrainIsolationForest(last_day_predictor=int(sys.argv[2]))
+            model = ModelTrainIsolationForest(last_day_predictor=int(args[2]))
             model.train_test_split()
             create_dahboard(model.train, get_data(pred_data_path, True))
         logger.get_time()
+
 
 
 
