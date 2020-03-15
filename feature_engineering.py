@@ -1,13 +1,22 @@
 import warnings
+import pandas as pd
 warnings.filterwarnings("ignore")
 
-from configs import data_path, features_data_path, alpha, feature_path
+from configs import data_path, features_data_path, feature_path, is_min_max_norm
 from data_access import get_data, write_to_csv, decide_feature_name
-from data_manipuations import get_p_value, get_descriptive_stats
 from logger import get_time
 
 
 class CreateFeatures:
+    """
+    creates features for models. Gethers functions for features from data_manipulation.py
+    data_path: if all creates all features at features.json seperately. for specific features assign argument as feature
+                Ex: python main.py feature_engineering slope
+    data: gethers row data send this into the feature.sjon of each feature of data key. It uses for creating features.
+    columns: raw data of columns
+    features: feature dictionary from features.json. each object represents a feature.
+    model_deciding:
+    """
     def __init__(self, model_deciding=None):
         get_time()
         self.data_path = data_path if model_deciding == 'all' else features_data_path
@@ -20,11 +29,19 @@ class CreateFeatures:
         if self.model_deciding != 'all':
             feature_2 = {}
             for f in self.model_deciding.split("-"):
+                self.check_features_existed(self.features[f]['args']['feature'],
+                                            self.features[f]['args']['related_columns'],
+                                            self.features[f]['args']['using_normalization']
+                                            )
                 feature_2[f] = self.features[f]
             self.features = feature_2
             print("features : ", self.model_deciding.split("-"))
 
-    def check_features_existed(self, feature_col, related_cols):
+    def check_features_existed(self, feature_col, related_cols, using_normalization):
+        if feature_col in self.columns:  # if there is no feature name is updated
+            self.data = self.data.drop(feature_col, axis=1)
+        if using_normalization:  # if feature
+            feature_col = feature_col + '_min_max_p_value' if is_min_max_norm else feature_col + '_p_value'
         if feature_col in list(self.columns):
             print("feature columns :", feature_col, " is deleted!!")
             self.data = self.data.drop(feature_col, axis=1)
@@ -36,21 +53,6 @@ class CreateFeatures:
         for f in self.features:
             self.features[f]['args']['data'] = self.data
 
-    def labeling_anormalities(self, f):
-        # TODO: Each Feaure of Right Side outlies detected y T- Normal Distribution For each Transaction.
-        # TODO: Intersection Of Each Transaction
-        self.data[f + '_score'] = self.data[f]
-        self.data = get_descriptive_stats(self.data, f + '_score', [], [])
-        self.data = get_p_value(self.data, f + '_score')
-        self.data[f + '_score_p_value'] = self.data[f + '_score_p_value'].apply(lambda x: 0 if x != x else x)
-        self.data[f + '_h0_rejected'] = self.data[f + '_score_p_value'].apply(lambda x:
-                                                                              1 if x > alpha else 0 if x < alpha else '-')
-
-    def assign_target_variable(self):
-        if 'target' not in list(self.data.columns):
-            a_l_total = lambda row: sum([row[f + '_h0_rejected'] for f in list(self.features.keys())])
-            self.data['target'] = self.data.apply(lambda row: 1 if a_l_total == len(self.features) else 0, axis=1)
-
     def assign_last_day_label(self):
         if 'is_last_day' not in list(self.data.columns):
             self.data = self.data.merge(self.data.rename(columns={'Created_Time': 'day_max'}
@@ -59,11 +61,12 @@ class CreateFeatures:
             self.data['is_last_day'] = self.data.apply(lambda row: 1 if row['Created_Time'] == row['day_max'] else 0, axis=1)
 
     def compute_features(self):
+        print("*" * 20, "Feature Engineering Process", "*" * 20)
         get_time()
+        self.deciding_computing_features()
         self.features_data_arrange()
         for f in self.features:
             print("Feature :", f)
-            self.check_features_existed(self.features[f]['args']['feature'], self.features[f]['args']['related_columns'])
             if self.features[f]['args']['num_of_transaction_removing']:
                 self.data = self.features[f]['args']['noisy_data_remover'](self.data,
                                                                            self.features[f]['args'][
@@ -72,10 +75,9 @@ class CreateFeatures:
                                                                                'num_of_days_removing'],
                                                                            )
             self.data = self.features[f]['calling'](self.data, f)
-            self.labeling_anormalities(f)
             print("data sample size :", len(self.data))
-        self.assign_target_variable()
         self.assign_last_day_label()
         write_to_csv(self.data, features_data_path)
+        print("*" * 20, "Feature Engineering Process Has Done", "*" * 20)
 
 

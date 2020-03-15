@@ -7,6 +7,7 @@ from scipy.spatial.distance import cdist
 from math import sqrt
 from scipy import stats
 from itertools import product
+from scipy.stats import linregress
 
 import configs
 
@@ -120,7 +121,7 @@ def remove_noisy_data(data, least_transactions, least_days):
     accepted_customers = data.pivot_table(index='customer_id',
                                           aggfunc={'Created_Time': 'count'}
                                           ).reset_index().query("Created_Time >= @least_days")['customer_id']
-    return data#.query("customer_id in @accepted_customers").reset_index(drop=True)
+    return data
 
 
 def distance_values_for_each_k_with_elbow_method(X):
@@ -399,7 +400,12 @@ def gmm_customer_scoring(data, feature):
     df_GMM_iqr[feature] = 1
     df_GMM = pd.concat(([df_GMM[[feature, 'customer_id']].reset_index(drop=True),
                          df_GMM_iqr[[feature, 'customer_id']].reset_index(drop=True)]))
+    if feature in list(data.columns):
+        data = data.drop(feature, axis=1)
     data = pd.merge(data_prev, df_GMM[[feature, 'customer_id']], on='customer_id', how='left')
+    print(data.columns)
+    print(data[data[feature] != data[feature]])
+    data[feature] = data[feature].fillna(0)
     return data
 
 
@@ -492,7 +498,6 @@ def get_customer_merchant_hourly_sequential_data(data, feature):
     data_pv['start'], data_pv['end'] = data_pv['Created_Time'], data_pv['Created_Time']
     c_m_dates = data_pv.pivot_table(index='customer_merchant_id',
                                     aggfunc={'start': 'min', 'end': 'max', 'total_t_count': 'count'}).to_dict('index')
-    print()
     dates = get_day_parts_of_data(c_m_dates=c_m_dates,
                                   start=min(data['Created_Time']),
                                   end=max(data['Created_Time']),
@@ -507,5 +512,40 @@ def get_customer_merchant_hourly_sequential_data(data, feature):
     return dates
 
 
-
-
+def slope_as_feature(data, feature):
+    # TODO: drop must be added
+    data = data.drop('index', axis=1) if 'index' in list(data.columns) else data
+    related_fields = ['max_three_amount', 'min_three_amount']
+    cols = ['customer_merchant_id', 'Amount']
+    total_transactions = []
+    for col in related_fields:
+        _ascending = False if col.split("_")[0] == 'max' else True
+        data[col] = data.sort_values(cols, ascending=_ascending).groupby(cols[0])[cols[1]].shift(3)
+        _data = data[data[col] != data[col]]
+        _data = _data.drop('index', axis=1) if 'index' in list(_data.columns) else _data
+        print("_data")
+        print(_data.head())
+        _c_m_ids = pd.DataFrame(list(product(list(_data[cols[0]].unique()), [1, 2, 3]))
+                                ).rename(columns={0: cols[0], 1: 'index'})
+        print("_c_m_ids")
+        print(_c_m_ids.head())
+        _data = pd.merge(_data, _c_m_ids, on=cols[0], how='left')
+        _c_last_3 = pd.DataFrame(_data.groupby(cols[0]).apply(lambda v: linregress(v['index'], v[cols[1]])[0])
+                                           ).reset_index().rename(columns={0: feature})
+        _c_last_3[feature] = _c_last_3[feature].apply(lambda x: abs(x))
+        _transactions = data.sort_values(by=cols[1],
+                                         ascending=_ascending).pivot_table(index=cols[0],
+                                                                      aggfunc={'PaymentTransactionId': 'first'}
+                                                                      ).reset_index()
+        _transactions = pd.merge(_transactions, _c_last_3, on=cols[0], how='left')
+        _transactions['max_v'], _transactions['min_v'] = max(_transactions[feature]), min(_transactions[feature])
+        _transactions[feature] = _transactions.apply(lambda row:
+                                                           (row[feature] - row['min_v']) / (row['max_v'] - row['min_v'])
+                                                           if row['max_v'] - row['min_v'] != 0 else 0,
+                                                           axis=1)
+        total_transactions += _transactions[['PaymentTransactionId', feature]].to_dict("results")
+        print("data :")
+        print(data.head())
+    data = pd.merge(data, pd.DataFrame(total_transactions), on='PaymentTransactionId', how='left')
+    data[feature] = data[feature].fillna(0)
+    return data.reset_index(drop=True)
