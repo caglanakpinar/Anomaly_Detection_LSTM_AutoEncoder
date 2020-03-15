@@ -25,18 +25,16 @@ if __name__ == "__main__":
             create_feature.compute_features()
 
         if sys.argv[1] == 'train_process':
-            # TODO: description must be updated
             """
             run from terminal: python main.py train_process 0
             0/1: 0; test data splits from date
                  1: test data is last day of each customer
-            Models: isolation forest and AutoEncoder for Multivariate and Univariate Models
+            Models: isolation forest & AutoEncoder & DBScan 
             """
             train = trainModel(args=sys.argv)
             train.process()
 
         if sys.argv[1] == 'prediction':
-            # TODO: description must be updated
             """
             run from terminal: python main.py prediction 0
             0/1: 0; test data splits from date
@@ -47,16 +45,11 @@ if __name__ == "__main__":
             prediction.process()
 
         if sys.argv[1] == 'dashboard':
-            # TODO: description must be updated
             """
-            run from terminal: python main.py dashboard 0 # 10.20.10.196:3030
-            run from terminal: python main.py dashboard 0 uni # 10.20.10.196:3031
+            run from terminal: python main.py dashboard 0
             0/1: 0; test data splits from date
                  1: test data is last day of each customer
-            uni: creates only for univariate models. I order to run for multivariate dashboard assign null
-            Dashboard for Multi - Uni Models is created
             """
-            # TODO: get prediction data from predicted .csv file
             model = ModelTrainIsolationForest(last_day_predictor=int(sys.argv[2]))
             model.train_test_split()
             create_dahboard(model.train, get_data(pred_data_path, True))
