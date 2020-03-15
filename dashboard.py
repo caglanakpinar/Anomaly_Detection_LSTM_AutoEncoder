@@ -4,14 +4,22 @@ import dash_html_components as html
 import pandas as pd
 import random
 import plotly.graph_objs as go
-import plotly.offline as offline
-import datetime
 import webbrowser
 
 from configs import sample_sizes, k_means_cluster_colors, related_cols, feature_path, host, port
 from configs import models_output, related_columns, is_local_run, learning_model_path
 from data_access import decide_feature_name, model_from_to_json
 
+
+def get_bias_condition_for_sampling(data, models):
+    bias_query_str = ''
+    for label in models:
+        if label in ['recon_ad', 'anomaly_ae_values']:
+            treshold = list(data[label])[int(len(data) * 0.01)]
+            data[label] = data[label].apply(lambda x: 0 if x < treshold else -1)
+            if treshold == treshold:
+                bias_query_str += label + " > " + str(treshold) + " or "
+    return bias_query_str, data
 
 def get_sample_from_data(main_data, sample_ratio, bias_data_condition=None):
     main_data = main_data.reset_index(drop=True)
@@ -36,13 +44,16 @@ def create_dahboard(df_train, df):
         df_train[m] = 0
     df_train = pd.concat([df_train[related_cols + feature + list(models_output.keys())].reset_index(drop=True),
                           df[related_cols].reset_index(drop=True)]).query("Amount == Amount")
+
     customer_merchant_ratios = df_train.pivot_table(index=['customer_id', 'merchant_id'],
                                                     aggfunc={'c_m_label_t_count': 'max', 'c_m_t_count': 'max',
                                                              'label_iso': 'sum'}).reset_index()
     customer_merchant_ratios['merchant_id'] = customer_merchant_ratios['merchant_id'].apply(lambda x: str(x))
+    bias_query_str, df = get_bias_condition_for_sampling(df, models_output)
+
     samples_dict = {}
     for s in sample_sizes:
-        samples_dict[s[0]] = {'data': get_sample_from_data(df, s[1])}
+        samples_dict[s[0]] = {'data': get_sample_from_data(df, s[1], bias_query_str + "slope > 0")}
         _customers = list(samples_dict[s[0]]['data']['customer_id'].unique())
         samples_dict[s[0]]['c_m_ratios'] = customer_merchant_ratios.query("customer_id in @_customers")
         samples_dict[s[0]]['customer_transactions'] = df_train.query("customer_id in @_customers")
@@ -144,19 +155,15 @@ def create_dahboard(df_train, df):
             dff = samples_dict[sample_sizes]['data']
         if merchant != 'ALL':
             dff = dff.query("merchant_id == @merchant")
-
-        dff = dff.rename(columns={selected_x: fea_dict[selected_x]['name'],
-                                  selected_y: fea_dict[selected_y]['name'],
-                                  selected_z: fea_dict[selected_z]['name']})
-
-        z = dff[model_selection]
+        print(dff.columns)
+        color = dff[model_selection]
         trace = [go.Scatter3d(
-                              x=dff[fea_dict[selected_x]['name']],
-                              y=dff[fea_dict[selected_y]['name']],
-                              z=dff[fea_dict[selected_z]['name']],
+                              x=dff[selected_x],
+                              y=dff[selected_y],
+                              z=dff[selected_z],
                               customdata=dff['PaymentTransactionId'],
                               mode='markers',
-                              marker={'size': 3, 'color': z,
+                              marker={'size': 3, 'color': color,
                                       'colorscale': k_means_cluster_colors,
                                       'opacity': 0.8, "showscale": False,
                                       "colorbar": {"thickness": 10, "len": 0.5, "x": 0.8, "y": 0.6, }, })]
@@ -210,9 +217,8 @@ def create_dahboard(df_train, df):
             samples_dict[sample_sizes]['data'][['PaymentTransactionId', 'customer_merchant_id']].query(
                 "PaymentTransactionId == @hoverData")['customer_merchant_id'])[0]
 
-        dff = samples_dict[sample_sizes]['customer_transactions'].query("customer_merchant_id == @customer_merchant_id")[
-            ['Amount', 'RequestInsertTime', 'label_iso']]
-        return {"data": [go.Scatter(x=dff['RequestInsertTime'], y=dff['Amount'], mode='markers', marker=dict(size=[20]))],
+        dff = df_train.query("customer_merchant_id == @customer_merchant_id")[['Amount', 'RequestInsertTime', 'label_iso']]
+        return {"data": [go.Scatter(x=dff['RequestInsertTime'], y=dff['Amount'], mode='markers')],
                 "layout": go.Layout(height=300,
                                     title=fea_dict['c_m_peak_drop_min_max_p_value']['name'] + " || C_M:" + customer_merchant_id if customer_merchant_id is not None else " - "
                                     )
@@ -226,7 +232,7 @@ def create_dahboard(df_train, df):
     )
     def ugdate_figure(hover_data_from_3d_scatter, sample_sizes):
         try:
-            hoverData = hover_data_from_3d_scatter['points'][0]['PaymentTransactionId']
+            hoverData = hover_data_from_3d_scatter['points'][0]['PaymentTran    sactionId']
         except:
             hoverData = hover_data_from_3d_scatter['points'][0]['customdata']
 
