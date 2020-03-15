@@ -4,18 +4,36 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.python.client import device_lib
 
-from tensorflow.keras.models import Model, Sequential
+from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input
 from tensorflow.keras.layers import Dense
 
 from tensorflow.keras.models import model_from_json
 from tensorflow.keras.optimizers import RMSprop
 from tensorflow.keras.utils import multi_gpu_model
+from tensorflow.keras import regularizers
 
 from configs import date_col, train_end_date, features_data_path, auto_encoder_model_paths, feature_path, run_gpu
 from data_access import decide_feature_name
 from data_access import get_data
 from logger import get_time
+
+
+def cal_hidden_layer_of_units(hidden_layers, _encoding_dim):
+    """
+    allows you to gether hidden layer units for AutoEncoder
+    :param hidden_layers: number of hidden layer for not work (both encoder and decoder)
+    :param _encoding_dim: Start encoder for AtoEncoder
+    :return: return units starts from encoder hidden layers
+    """
+    count = 1
+    _unit = _encoding_dim
+    h_l_units = []
+    while count != hidden_layers + 1:
+        h_l_units.append(int(_unit))
+        _unit /= 2
+        count += 1
+    return h_l_units
 
 
 class ModelTrainAutoEncoders:
@@ -54,6 +72,21 @@ class ModelTrainAutoEncoders:
 
     def get_x_values(self, is_for_prediction):
         self.X = self.test[self.features].values if is_for_prediction else self.train[self.features].values
+
+    def build_model(self):
+        self.h_units = cal_hidden_layer_of_units(self.params['h_layers'], self.params['encode_dim'])
+        self.input = Input(shape=(len(self.features),))
+        self.hidden = self.input
+        for _unit in self.h_units:
+            self.hidden = Dense(_unit,
+                                activation=self.params['activation'],
+                                activity_regularizer=regularizers.l1(self.params['l1']))(self.hidden)
+        self.fr_output = Dense(len(self.features), activation='relu')(self.hidden)
+        self.model = Model(inputs=self.input, outputs=self.fr_output)
+        self.model.compile(loss='mae', optimizer=RMSprop(lr=self.params['lr']), metrics=['mae'])
+        print(self.model.summary())
+
+
 
     def auto_encoder(self):
         self.input = Input(shape=(len(self.features),))

@@ -5,7 +5,7 @@ is_local_run = False
 is_min_max_norm = True
 run_from_sample_data = False
 run_gpu = False
-sample_args = ['main.py', 'train_process', '0', 'all']
+sample_args = ['main.py', 'feature_engineering', 'slope']
 main_data_path = ''
 data_path = "transaction_data_all_sample.csv"
 features_data_path = "features.csv"
@@ -20,7 +20,7 @@ feature_lstm_amaine = 'features_lstm_ae.json'
 feature_path = 'features.json'
 learning_model_path = 'learning_models.json'
 pred_data_path = 'predicted_test_data.csv'
-sample_size = 30000
+sample_size = 60000
 
 at_least_t_count_per_user = 8
 at_least_t_count_per_user_gmm = 8
