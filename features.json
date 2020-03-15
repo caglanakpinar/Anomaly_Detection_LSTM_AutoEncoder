@@ -32,5 +32,27 @@
     },
                                               "name": "C. M. AbNormal Peak And Drop Score",
                                               "calling": "customer_merchant_peak_drop"
+                                              },
+    "slope": {"args": {
+                                                       "data": "-",
+                                                       "noisy_data_remover": "remove_noisy_data",
+                                                       "num_of_transaction_removing": 5,
+                                                       "num_of_days_removing": 5,
+                                                       "feature": "slope", "related_columns": "-",
+                                                       "using_normalization": "False"
+    },
+                                              "name": "C. M. Max 3 Days Of Slope",
+                                              "calling": "slope_as_feature"
+                                              },
+      "gmm": {"args": {
+                                                       "data": "-",
+                                                       "noisy_data_remover": "remove_noisy_data",
+                                                       "num_of_transaction_removing": 5,
+                                                       "num_of_days_removing": 5,
+                                                       "feature": "gmm", "related_columns": "-",
+                                                       "using_normalization": "False"
+    },
+                                              "name": "C. Gaussian Mixture Model P Values (GMM with RFM)",
+                                              "calling": "gmm_customer_scoring"
                                               }
 }
