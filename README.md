@@ -17,7 +17,7 @@ You only have customer, transaction, merchant of unique ids and transaction date
 
 ## How it works?
 
-There are 3 main processes. !st You can create features. If there is not observed data set, it generates random data set. It is possible to assign a data set with .csv file or data connection. Data of file path must be assigned at configs.py data_path. It genreated features from the feature.json file. All information how to generates are assigned at feature.json file. 2ndYou can tran with features set with Isolation Forest, AutoEncoder (Multivariate - Univariate), LSTM - AutoEncoder. 3rd, it is possible to show results with dashbord
+There are 3 main processes. 1st You can create features. If there is not observed data set, it generates random data set. It is possible to assign a data set with .csv file or data connection. Data of file path must be assigned at configs.py data_path. It genreated features from the feature.json file. All information how to generates are assigned at feature.json file. 2ndYou can tran with features set with Isolation Forest, AutoEncoder (Multivariate - Univariate), LSTM - AutoEncoder. 3rd, it is possible to show results with dashbord
 
 **1st generate random data and create features:**
 
